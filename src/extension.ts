@@ -1,25 +1,25 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	console.log(`Extension activated: ${context.extensionUri}`);
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "statusbartimer" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('statusbartimer.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from StatusBarTimer!');
+	const clickTimerCommandId = 'statusbartimer.clickTimer';
+	const clickTimerCommand = vscode.commands.registerCommand(clickTimerCommandId, () => {
+		vscode.window.showInformationMessage('Clicked on status bar timer');
 	});
+	context.subscriptions.push(clickTimerCommand);
 
-	context.subscriptions.push(disposable);
+	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	statusBarItem.command = clickTimerCommandId;
+	context.subscriptions.push(statusBarItem);
+
+	const updateStatusBarItem = () => {
+		console.log('Updating status bar item');
+		statusBarItem.text = '$(clock) timer';
+	};
+	
+	updateStatusBarItem();
+	statusBarItem.show();
 }
 
 // This method is called when your extension is deactivated
