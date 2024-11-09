@@ -1,8 +1,11 @@
 {
-  "name": "statusbartimer",
-  "displayName": "StatusBarTimer",
+  "name": "statusbar-timer",
+  "displayName": "StatusBar Timer",
   "description": "",
   "version": "0.0.1",
+  "author": "Andrew Keeton",
+  "publisher": "akeeton",
+  "private": true,
   "engines": {
     "vscode": "^1.95.0"
   },
