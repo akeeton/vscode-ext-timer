@@ -17,10 +17,13 @@ export function activate(context: vscode.ExtensionContext) {
 		console.log('Updating status bar item');
 		statusBarItem.text = '$(clock) timer';
 	};
-	
+
 	updateStatusBarItem();
 	statusBarItem.show();
+
+	setTimeout(() => {
+		
+	}, 1000);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}
