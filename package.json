@@ -17,7 +17,16 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": []
+    "commands": [
+      {
+        "title": "StatusBar Timer: Start timer",
+        "command": "statusbar-timer.startTimer"
+      },
+      {
+        "title": "StatusBar Timer: Stop timer",
+        "command": "statusbar-timer.stopTimer"
+      }
+    ]
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
