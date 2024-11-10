@@ -73,6 +73,7 @@ export function activate({
 	subscriptions,
 	workspaceState,
 }: vscode.ExtensionContext) {
+	// TODO: Move some of this into its own class
 	console.log(`Extension activated: ${extension.id}`);
 
 	function makeCommand(commandName: string) {
@@ -81,40 +82,6 @@ export function activate({
 
 	const startStopTimes = new StartStopTimes();
 	startStopTimes.loadFromStorage(workspaceState);
-	
-	const clickStatusBarItem: Command = {
-		command: makeCommand('clickStatusBarItem'),
-		callback() {
-			showInformationMessage('Clicked on status bar timer');
-		}
-	};
-	subscriptions.push(registerCommand(clickStatusBarItem.command, clickStatusBarItem.callback));
-
-	// TODO: Move statusBarItemUpdateInMs to user settings
-	const statusBarItemUpdateInMs = 1000;
-	const statusBarItem = window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-	statusBarItem.command = clickStatusBarItem.command;
-	subscriptions.push(statusBarItem);
-
-	function updateStatusBarItem() {
-		let intervalsStoppedNow: Interval[];
-		if (!startStopTimes.lastStartTime) {
-			intervalsStoppedNow = startStopTimes.intervals;
-		} else {
-			intervalsStoppedNow = startStopTimes.intervals.concat(
-				Interval.fromDateTimes(startStopTimes.lastStartTime, DateTime.utc())
-			);
-		}
-
-		const duration = intervalsStoppedNow.map((interval) => {
-			return interval.toDuration();
-		}).reduce((durationAcc, duration) => {
-			return durationAcc.plus(duration);
-		}, Duration.fromObject({}));
-
-		// TODO: Make format a user setting?
-		statusBarItem.text = `$(clock) ${duration.toFormat('hh:mm:ss')}`;
-	};
 
 	const startTimer: Command = {
 		command: makeCommand('startTimer'),
@@ -150,6 +117,44 @@ export function activate({
 		}
 	};
 	subscriptions.push(registerCommand(stopTimer.command, stopTimer.callback));
+
+	const clickStatusBarItem: Command = {
+		command: makeCommand('clickStatusBarItem'),
+		callback() {
+			if (!startStopTimes.lastStartTime) {
+				startTimer.callback();
+			} else {
+				stopTimer.callback();
+			}
+		}
+	};
+	subscriptions.push(registerCommand(clickStatusBarItem.command, clickStatusBarItem.callback));
+
+	// TODO: Move statusBarItemUpdateInMs to user settings
+	const statusBarItemUpdateInMs = 1000;
+	const statusBarItem = window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+	statusBarItem.command = clickStatusBarItem.command;
+	subscriptions.push(statusBarItem);
+
+	function updateStatusBarItem() {
+		let intervalsStoppedNow: Interval[];
+		if (!startStopTimes.lastStartTime) {
+			intervalsStoppedNow = startStopTimes.intervals;
+		} else {
+			intervalsStoppedNow = startStopTimes.intervals.concat(
+				Interval.fromDateTimes(startStopTimes.lastStartTime, DateTime.utc())
+			);
+		}
+
+		const duration = intervalsStoppedNow.map((interval) => {
+			return interval.toDuration();
+		}).reduce((durationAcc, duration) => {
+			return durationAcc.plus(duration);
+		}, Duration.fromObject({}));
+
+		// TODO: Make format a user setting?
+		statusBarItem.text = `$(clock) ${duration.toFormat('hh:mm:ss')}`;
+	};
 
 	const resetTimer: Command = {
 		command: makeCommand('resetTimer'),
