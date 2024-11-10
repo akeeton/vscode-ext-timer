@@ -76,7 +76,7 @@ export function activate({
 	// TODO: Move some of this into its own class
 	console.log(`Extension activated: ${extension.id}`);
 
-	function makeCommand(commandName: string) {
+	function makeCommandId(commandName: string) {
 		return `${extension.packageJSON.name}.${commandName}`;
 	}
 
@@ -84,7 +84,7 @@ export function activate({
 	startStopTimes.loadFromStorage(workspaceState);
 
 	const startTimer: Command = {
-		command: makeCommand('startTimer'),
+		command: makeCommandId('startTimer'),
 		callback() {
 			if (!startStopTimes.lastStartTime) {
 				startStopTimes.lastStartTime = DateTime.utc();
@@ -100,7 +100,7 @@ export function activate({
 	subscriptions.push(registerCommand(startTimer.command, startTimer.callback));
 
 	const stopTimer: Command = {
-		command: makeCommand('stopTimer'),
+		command: makeCommandId('stopTimer'),
 		callback() {
 			if (!startStopTimes.lastStartTime) {
 				showInformationMessage('Timer already stopped');
@@ -119,7 +119,7 @@ export function activate({
 	subscriptions.push(registerCommand(stopTimer.command, stopTimer.callback));
 
 	const clickStatusBarItem: Command = {
-		command: makeCommand('clickStatusBarItem'),
+		command: makeCommandId('clickStatusBarItem'),
 		callback() {
 			if (!startStopTimes.lastStartTime) {
 				startTimer.callback();
@@ -157,7 +157,7 @@ export function activate({
 	};
 
 	const resetTimer: Command = {
-		command: makeCommand('resetTimer'),
+		command: makeCommandId('resetTimer'),
 		callback() {
 			startStopTimes.reset();
 			startStopTimes.saveToStorage(workspaceState);
@@ -167,7 +167,7 @@ export function activate({
 	subscriptions.push(registerCommand(resetTimer.command, resetTimer.callback));
 
 	const debugShowWorkSpaceStorage: Command = {
-		command: makeCommand('debug.showWorkspaceStorage'),
+		command: makeCommandId('debug.showWorkspaceStorage'),
 		callback() {
 			let data = '';
 			for (const key of workspaceState.keys()) {
