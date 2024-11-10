@@ -73,94 +73,30 @@ export function activate({
 	subscriptions,
 	workspaceState,
 }: vscode.ExtensionContext) {
+	console.log(`Extension activated: ${extension.id}`);
+
 	function makeCommand(commandName: string) {
 		return `${extension.packageJSON.name}.${commandName}`;
 	}
 
-	console.log(`Extension activated: ${extension.id}`);
-
+	const startStopTimes = new StartStopTimes();
+	startStopTimes.loadFromStorage(workspaceState);
+	
 	const clickStatusBarItem: Command = {
 		command: makeCommand('clickStatusBarItem'),
-		callback: () => {
+		callback() {
 			showInformationMessage('Clicked on status bar timer');
 		}
 	};
-
-	const startTimer: Command = {
-		command: makeCommand('startTimer'),
-		callback: () => {
-			if (!startStopTimes.lastStartTime) {
-				startStopTimes.lastStartTime = DateTime.utc();
-				showInformationMessage('Started timer');
-			} else {
-				showInformationMessage('Timer already started');
-			}
-
-			startStopTimes.saveToStorage(workspaceState);
-			updateStatusBarItem();
-		}
-	};
-
-	const stopTimer: Command = {
-		command: makeCommand('stopTimer'),
-		callback: () => {
-			if (!startStopTimes.lastStartTime) {
-				showInformationMessage('Timer already stopped');
-			} else {
-				startStopTimes.intervals.push(
-					Interval.fromDateTimes(startStopTimes.lastStartTime, DateTime.utc())
-				);
-				startStopTimes.lastStartTime = undefined;
-				showInformationMessage('Stopped timer');
-			}
-
-			startStopTimes.saveToStorage(workspaceState);
-			updateStatusBarItem();
-		}
-	};
-
-	const resetTimer: Command = {
-		command: makeCommand('resetTimer'),
-		callback: () => {
-			startStopTimes.reset();
-			startStopTimes.saveToStorage(workspaceState);
-			updateStatusBarItem();
-		}
-	};
-
-	const debugShowWorkSpaceStorage: Command = {
-		command: makeCommand('debug.showWorkspaceStorage'),
-		callback: () => {
-			let data = '';
-			for (const key of workspaceState.keys()) {
-				data += `${key}: ${JSON.stringify(workspaceState.get(key), null, 2)}\n`;
-			}
-
-			if (data.length === 0) {
-				console.log('Workspace storage empty');
-			} else {
-				console.log(`Workspace storage:\n${data}`);
-			}
-		}
-	};
-
 	subscriptions.push(registerCommand(clickStatusBarItem.command, clickStatusBarItem.callback));
-	subscriptions.push(registerCommand(startTimer.command, startTimer.callback));
-	subscriptions.push(registerCommand(stopTimer.command, stopTimer.callback));
-	subscriptions.push(registerCommand(resetTimer.command, resetTimer.callback));
-	subscriptions.push(registerCommand(debugShowWorkSpaceStorage.command, debugShowWorkSpaceStorage.callback));
 
-	// TODO: Move to user settings
+	// TODO: Move statusBarItemUpdateInMs to user settings
 	const statusBarItemUpdateInMs = 1000;
-
 	const statusBarItem = window.createStatusBarItem(vscode.StatusBarAlignment.Right);
 	statusBarItem.command = clickStatusBarItem.command;
 	subscriptions.push(statusBarItem);
 
-	const startStopTimes = new StartStopTimes();
-	startStopTimes.loadFromStorage(workspaceState);
-
-	const updateStatusBarItem = () => {
+	function updateStatusBarItem() {
 		let intervalsStoppedNow: Interval[];
 		if (!startStopTimes.lastStartTime) {
 			intervalsStoppedNow = startStopTimes.intervals;
@@ -179,6 +115,68 @@ export function activate({
 		// TODO: Make format a user setting?
 		statusBarItem.text = `$(clock) ${duration.toFormat('hh:mm:ss')}`;
 	};
+
+	const startTimer: Command = {
+		command: makeCommand('startTimer'),
+		callback() {
+			if (!startStopTimes.lastStartTime) {
+				startStopTimes.lastStartTime = DateTime.utc();
+				showInformationMessage('Started timer');
+			} else {
+				showInformationMessage('Timer already started');
+			}
+
+			startStopTimes.saveToStorage(workspaceState);
+			updateStatusBarItem();
+		}
+	};
+	subscriptions.push(registerCommand(startTimer.command, startTimer.callback));
+
+	const stopTimer: Command = {
+		command: makeCommand('stopTimer'),
+		callback() {
+			if (!startStopTimes.lastStartTime) {
+				showInformationMessage('Timer already stopped');
+			} else {
+				startStopTimes.intervals.push(
+					Interval.fromDateTimes(startStopTimes.lastStartTime, DateTime.utc())
+				);
+				startStopTimes.lastStartTime = undefined;
+				showInformationMessage('Stopped timer');
+			}
+
+			startStopTimes.saveToStorage(workspaceState);
+			updateStatusBarItem();
+		}
+	};
+	subscriptions.push(registerCommand(stopTimer.command, stopTimer.callback));
+
+	const resetTimer: Command = {
+		command: makeCommand('resetTimer'),
+		callback() {
+			startStopTimes.reset();
+			startStopTimes.saveToStorage(workspaceState);
+			updateStatusBarItem();
+		}
+	};
+	subscriptions.push(registerCommand(resetTimer.command, resetTimer.callback));
+
+	const debugShowWorkSpaceStorage: Command = {
+		command: makeCommand('debug.showWorkspaceStorage'),
+		callback() {
+			let data = '';
+			for (const key of workspaceState.keys()) {
+				data += `${key}: ${JSON.stringify(workspaceState.get(key), null, 2)}\n`;
+			}
+
+			if (data.length === 0) {
+				console.log('Workspace storage empty');
+			} else {
+				console.log(`Workspace storage:\n${data}`);
+			}
+		}
+	};
+	subscriptions.push(registerCommand(debugShowWorkSpaceStorage.command, debugShowWorkSpaceStorage.callback));
 
 	updateStatusBarItem();
 	statusBarItem.show();
