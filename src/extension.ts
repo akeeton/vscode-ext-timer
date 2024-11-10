@@ -65,7 +65,7 @@ class StartStopTimes {
 }
 
 interface Command {
-	command: string,
+	commandId: string,
 	callback: () => void
 }
 
@@ -85,7 +85,7 @@ export function activate({
 	startStopTimes.loadFromStorage(workspaceState);
 
 	const startTimer: Command = {
-		command: makeCommandId('startTimer'),
+		commandId: makeCommandId('startTimer'),
 		callback() {
 			if (!startStopTimes.lastStartTime) {
 				startStopTimes.lastStartTime = DateTime.utc();
@@ -98,10 +98,10 @@ export function activate({
 			updateStatusBarItem();
 		}
 	};
-	subscriptions.push(registerCommand(startTimer.command, startTimer.callback));
+	subscriptions.push(registerCommand(startTimer.commandId, startTimer.callback));
 
 	const stopTimer: Command = {
-		command: makeCommandId('stopTimer'),
+		commandId: makeCommandId('stopTimer'),
 		callback() {
 			if (!startStopTimes.lastStartTime) {
 				showInformationMessage('Timer already stopped');
@@ -117,10 +117,10 @@ export function activate({
 			updateStatusBarItem();
 		}
 	};
-	subscriptions.push(registerCommand(stopTimer.command, stopTimer.callback));
+	subscriptions.push(registerCommand(stopTimer.commandId, stopTimer.callback));
 
 	const clickStatusBarItem: Command = {
-		command: makeCommandId('clickStatusBarItem'),
+		commandId: makeCommandId('clickStatusBarItem'),
 		callback() {
 			if (!startStopTimes.lastStartTime) {
 				startTimer.callback();
@@ -129,12 +129,12 @@ export function activate({
 			}
 		}
 	};
-	subscriptions.push(registerCommand(clickStatusBarItem.command, clickStatusBarItem.callback));
+	subscriptions.push(registerCommand(clickStatusBarItem.commandId, clickStatusBarItem.callback));
 
 	// TODO: Move statusBarItemUpdateInMs to user settings
 	const statusBarItemUpdateInMs = 1000;
 	const statusBarItem = window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-	statusBarItem.command = clickStatusBarItem.command;
+	statusBarItem.command = clickStatusBarItem.commandId;
 	subscriptions.push(statusBarItem);
 
 	function updateStatusBarItem() {
@@ -159,17 +159,17 @@ export function activate({
 	};
 
 	const resetTimer: Command = {
-		command: makeCommandId('resetTimer'),
+		commandId: makeCommandId('resetTimer'),
 		callback() {
 			startStopTimes.reset();
 			startStopTimes.saveToStorage(workspaceState);
 			updateStatusBarItem();
 		}
 	};
-	subscriptions.push(registerCommand(resetTimer.command, resetTimer.callback));
+	subscriptions.push(registerCommand(resetTimer.commandId, resetTimer.callback));
 
 	const debugShowWorkSpaceStorage: Command = {
-		command: makeCommandId('debug.showWorkspaceStorage'),
+		commandId: makeCommandId('debug.showWorkspaceStorage'),
 		callback() {
 			let data = '';
 			for (const key of workspaceState.keys()) {
@@ -183,7 +183,7 @@ export function activate({
 			}
 		}
 	};
-	subscriptions.push(registerCommand(debugShowWorkSpaceStorage.command, debugShowWorkSpaceStorage.callback));
+	subscriptions.push(registerCommand(debugShowWorkSpaceStorage.commandId, debugShowWorkSpaceStorage.callback));
 
 	updateStatusBarItem();
 	statusBarItem.show();
