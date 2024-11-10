@@ -145,6 +145,19 @@ export function activate({
 
 		startStopTimes.saveToStorage(workspaceState);
 	}));
+
+	subscriptions.push(registerCommand(makeCommandId('debug.showWorkspaceStorage'), () => {
+		let data = '';
+		for (const key of workspaceState.keys()) {
+			data += `${key}: ${JSON.stringify(workspaceState.get(key), null, 2)}\n`;
+		}
+
+		if (data.length === 0) {
+			console.log('Workspace storage empty');
+		} else {
+			console.log(`Workspace storage:\n${data}`);
+		}
+	}));
 }
 
 export function deactivate() {

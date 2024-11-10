@@ -29,6 +29,10 @@
       {
         "title": "Status Bar Timer: Reset timer",
         "command": "status-bar-timer.resetTimer"
+      },
+      {
+        "title": "Status Bar Timer: Debug: Show workspace storage",
+        "command": "status-bar-timer.debug.showWorkspaceStorage"
       }
     ]
   },
