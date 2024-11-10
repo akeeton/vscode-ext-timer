@@ -1,6 +1,6 @@
 {
-  "name": "statusbar-timer",
-  "displayName": "StatusBar Timer",
+  "name": "status-bar-timer",
+  "displayName": "Status Bar Timer",
   "description": "",
   "version": "0.0.1",
   "author": "Andrew Keeton",
@@ -19,12 +19,16 @@
   "contributes": {
     "commands": [
       {
-        "title": "StatusBar Timer: Start timer",
-        "command": "statusbar-timer.startTimer"
+        "title": "Status Bar Timer: Start timer",
+        "command": "status-bar-timer.startTimer"
       },
       {
-        "title": "StatusBar Timer: Stop timer",
-        "command": "statusbar-timer.stopTimer"
+        "title": "Status Bar Timer: Stop timer",
+        "command": "status-bar-timer.stopTimer"
+      },
+      {
+        "title": "Status Bar Timer: Reset timer",
+        "command": "status-bar-timer.resetTimer"
       }
     ]
   },
