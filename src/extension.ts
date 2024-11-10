@@ -6,15 +6,28 @@ import { DateTime, Duration, Interval } from 'luxon';
 const registerCommand = commands.registerCommand;
 const showInformationMessage = window.showInformationMessage;
 
-export function activate({ extension, subscriptions }: vscode.ExtensionContext) {
+export function activate({
+	extension,
+	subscriptions,
+	workspaceState,
+}: vscode.ExtensionContext) {
 	function makeCommandId(commandName: string) {
 		return `${extension.packageJSON.name}.${commandName}`;
 	}
 
 	console.log(`Extension activated: ${extension.id}`);
 
-	let lastStartTime: DateTime | null = null;
-	const intervals: Interval[] = [];
+	type StartStopTimes = {
+		lastStartTime: DateTime | null,
+		intervals: Interval[],
+	}
+
+	const startStopTimes: StartStopTimes = workspaceState.get('startStopTimes', {
+		lastStartTime: null,
+		intervals: [],
+	});
+
+	// TODO: Move to user settings
 	const statusBarItemUpdateInMs = 1000;
 
 	const clickStatusBarItemId = makeCommandId('clickStatusBarItem');
@@ -28,11 +41,11 @@ export function activate({ extension, subscriptions }: vscode.ExtensionContext) 
 
 	const updateStatusBarItem = () => {
 		let intervalsStoppedNow: Interval[];
-		if (!lastStartTime) {
-			intervalsStoppedNow = intervals;
+		if (!startStopTimes.lastStartTime) {
+			intervalsStoppedNow = startStopTimes.intervals;
 		} else {
-			intervalsStoppedNow = intervals.concat(
-				Interval.fromDateTimes(lastStartTime, DateTime.utc())
+			intervalsStoppedNow = startStopTimes.intervals.concat(
+				Interval.fromDateTimes(startStopTimes.lastStartTime, DateTime.utc())
 			);
 		}
 
@@ -42,6 +55,7 @@ export function activate({ extension, subscriptions }: vscode.ExtensionContext) 
 			return durationAcc.plus(duration);
 		}, Duration.fromObject({}));
 
+		// TODO: Make format a user setting?
 		statusBarItem.text = `$(clock) ${duration.toFormat('hh:mm:ss')}`;
 	};
 
@@ -50,8 +64,8 @@ export function activate({ extension, subscriptions }: vscode.ExtensionContext) 
 	setInterval(updateStatusBarItem, statusBarItemUpdateInMs);
 
 	subscriptions.push(registerCommand(makeCommandId('startTimer'), () => {
-		if (!lastStartTime) {
-			lastStartTime = DateTime.utc();
+		if (!startStopTimes.lastStartTime) {
+			startStopTimes.lastStartTime = DateTime.utc();
 			showInformationMessage('Started timer');
 		} else {
 			showInformationMessage('Timer already started');
@@ -59,16 +73,18 @@ export function activate({ extension, subscriptions }: vscode.ExtensionContext) 
 	}));
 
 	subscriptions.push(registerCommand(makeCommandId('stopTimer'), () => {
-		if (!lastStartTime) {
+		if (!startStopTimes.lastStartTime) {
 			showInformationMessage('Timer already stopped');
 		} else {
-			intervals.push(
-				Interval.fromDateTimes(lastStartTime, DateTime.utc())
+			startStopTimes.intervals.push(
+				Interval.fromDateTimes(startStopTimes.lastStartTime, DateTime.utc())
 			);
-			lastStartTime = null;
+			startStopTimes.lastStartTime = null;
 			showInformationMessage('Stopped timer');
 		}
 	}));
 }
 
-export function deactivate() {}
+export function deactivate() {
+	// TODO: Save lastStartTime to intervals and set to null
+}
