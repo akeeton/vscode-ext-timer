@@ -12,6 +12,7 @@ type StartStopTimesDto = {
 	intervals: string[];
 }
 
+// TODO: Replace checking startStopTimes.lastStartTime with an isRunning() function
 // TODO: Somehow finish open interval and save to storage on shutdown
 // TODO: Move to its own file
 class StartStopTimes {
@@ -152,8 +153,9 @@ export function activate({
 			return durationAcc.plus(duration);
 		}, Duration.fromObject({}));
 
+		const icon = startStopTimes.lastStartTime ? 'stop-circle' : 'clock';
 		// TODO: Make format a user setting?
-		statusBarItem.text = `$(clock) ${duration.toFormat('hh:mm:ss')}`;
+		statusBarItem.text = `$(${icon}) ${duration.toFormat('hh:mm:ss')}`;
 	};
 
 	const resetTimer: Command = {
@@ -185,6 +187,7 @@ export function activate({
 
 	updateStatusBarItem();
 	statusBarItem.show();
+	// TODO: Update only when running
 	setInterval(updateStatusBarItem, statusBarItemUpdateInMs);
 }
 
