@@ -1,6 +1,5 @@
-import * as vscode from 'vscode';
-
 import { DateTime, Duration, Interval } from 'luxon';
+import * as vscode from 'vscode';
 
 type StartStopTimesDto = {
 	lastStartTime?: string;
@@ -53,14 +52,13 @@ class StartStopTimes {
 	};
 }
 
-// TODO: Use <method>.name and runtime check of package.json instead?
 type CommandName =
 	| 'startTimer'
 	| 'stopTimer'
 	| 'resetTimer'
 	| 'clickStatusBarItem'
-	| 'debug.showWorkspaceStorage'
-	| 'debug.clearAllWorkspaceStorage'
+	| 'debugShowWorkspaceStorage'
+	| 'debugClearAllWorkspaceStorage'
 
 // TODO: Replace checking this.startStopTimes.lastStartTime with an isRunning() function
 class StatusBarTimer {
@@ -117,12 +115,12 @@ class StatusBarTimer {
 
 		// TODO: Only register debug commands when debugging (how?)
 		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId('debug.showWorkspaceStorage'),
+			this.makeCommandId('debugShowWorkspaceStorage'),
 			this.debugShowWorkSpaceStorage
 		));
 
 		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId('debug.clearAllWorkspaceStorage'),
+			this.makeCommandId('debugClearAllWorkspaceStorage'),
 			this.debugClearAllWorkspaceStorage
 		));
 	}

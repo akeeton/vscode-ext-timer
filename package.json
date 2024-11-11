@@ -32,11 +32,11 @@
       },
       {
         "title": "Status Bar Timer: Debug: Show workspace storage",
-        "command": "status-bar-timer.debug.showWorkspaceStorage"
+        "command": "status-bar-timer.debugShowWorkspaceStorage"
       },
       {
         "title": "Status Bar Timer: Debug: Clear all workspace storage",
-        "command": "status-bar-timer.debug.clearAllWorkspaceStorage"
+        "command": "status-bar-timer.debugClearAllWorkspaceStorage"
       }
     ]
   },
