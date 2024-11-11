@@ -147,7 +147,6 @@ class StatusBarTimer {
 	private startTimer = () => {
 		if (!this.startStopTimes.lastStartTime) {
 			this.startStopTimes.lastStartTime = DateTime.utc();
-			vscode.window.showInformationMessage('Started timer');
 		} else {
 			vscode.window.showInformationMessage('Timer already started');
 		}
@@ -164,7 +163,6 @@ class StatusBarTimer {
 				Interval.fromDateTimes(this.startStopTimes.lastStartTime, DateTime.utc())
 			);
 			this.startStopTimes.lastStartTime = undefined;
-			vscode.window.showInformationMessage('Stopped timer');
 		}
 
 		this.startStopTimes.saveToStorage(this.context.workspaceState);
@@ -199,10 +197,24 @@ class StatusBarTimer {
 	};
 
 	private debugClearAllWorkspaceStorage = () => {
-		// TODO: Add confirmation (showQuickPick(yes/no))?
-		for (const key of this.context.workspaceState.keys()) {
-			this.context.workspaceState.update(key, undefined);
-		}
+		const no = 'No';
+		const yes = 'Yes';
+		vscode.window.showQuickPick(
+			[no, yes],
+			{ title: 'Clear all workspace storage for this extension?'}
+		).then((value) => {
+			if (value !== yes) {
+				return;
+			}
+
+			for (const key of this.context.workspaceState.keys()) {
+				this.context.workspaceState.update(key, undefined);
+			}
+
+			this.startStopTimes.loadFromStorage(this.context.workspaceState);
+
+			vscode.window.showInformationMessage('Cleared workspace storage');
+		});
 	};
 }
 
