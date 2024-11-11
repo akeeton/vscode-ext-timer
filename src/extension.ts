@@ -93,6 +93,10 @@ class StatusBarTimer {
 		return `${this.context.extension.packageJSON.name}.${commandName}`;
 	};
 
+	private getDisplayName() {
+		return this.context.extension.packageJSON.displayName;
+	}
+
 	private registerCommands() {
 		this.context.subscriptions.push(vscode.commands.registerCommand(
 			this.makeCommandId('startTimer'), this.startTimer
@@ -201,7 +205,7 @@ class StatusBarTimer {
 		const yes = 'Yes';
 		vscode.window.showQuickPick(
 			[no, yes],
-			{ title: 'Clear all workspace storage for this extension?'}
+			{ title: `Clear all workspace storage for ${this.getDisplayName()}?`}
 		).then((value) => {
 			if (value !== yes) {
 				return;
