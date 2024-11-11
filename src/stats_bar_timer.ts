@@ -11,8 +11,6 @@ interface StatusBarCommands {
 	debugClearAllWorkspaceStorage(): void;
 }
 
-type StatusBarCommandName = keyof StatusBarCommands
-
 // TODO: Replace checking this.startStopTimes.lastStartTime with an isRunning() function
 export class StatusBarTimer implements StatusBarCommands {
 	constructor(
@@ -40,42 +38,29 @@ export class StatusBarTimer implements StatusBarCommands {
 		console.log(`Extension ${this.context.extension.id} activated`);
 	};
 
-	private makeCommandId = (commandName: StatusBarCommandName) => {
-		return `${this.context.extension.packageJSON.name}.${commandName}`;
-	};
-
 	private getDisplayName() {
 		return this.context.extension.packageJSON.displayName;
 	}
 
+	private makeCommandId = (commandName: keyof StatusBarCommands) => {
+		return `${this.context.extension.packageJSON.name}.${commandName}`;
+	};
+
+	private registerCommand(commandName: keyof StatusBarCommands) {
+		this.context.subscriptions.push(vscode.commands.registerCommand(
+			this.makeCommandId(commandName), this[commandName]
+		));
+	}
+
 	private registerCommands() {
-		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId('startTimer'), this.startTimer
-		));
+		this.registerCommand('startTimer');
+		this.registerCommand('stopTimer');
+		this.registerCommand('resetTimer');
+		this.registerCommand('clickStatusBarItem');
+		this.registerCommand('debugShowWorkspaceStorage');
+		this.registerCommand('debugClearAllWorkspaceStorage');
 
-		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId('stopTimer'), this.stopTimer
-		));
-
-		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId('resetTimer'), this.resetTimer
-		));
-
-		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId('clickStatusBarItem'), this.clickStatusBarItem
-		));
 		this.statusBarItem.command = this.makeCommandId('clickStatusBarItem');
-
-		// TODO: Only register debug commands when debugging (how?)
-		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId('debugShowWorkspaceStorage'),
-			this.debugShowWorkspaceStorage
-		));
-
-		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId('debugClearAllWorkspaceStorage'),
-			this.debugClearAllWorkspaceStorage
-		));
 	}
 
 	private updateStatusBarItem = () => {
