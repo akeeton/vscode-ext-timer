@@ -116,7 +116,7 @@ class StatusBarTimer {
 		// TODO: Only register debug commands when debugging (how?)
 		this.context.subscriptions.push(vscode.commands.registerCommand(
 			this.makeCommandId('debugShowWorkspaceStorage'),
-			this.debugShowWorkSpaceStorage
+			this.debugShowWorkspaceStorage
 		));
 
 		this.context.subscriptions.push(vscode.commands.registerCommand(
@@ -185,7 +185,7 @@ class StatusBarTimer {
 		}
 	};
 
-	private debugShowWorkSpaceStorage = () => {
+	private debugShowWorkspaceStorage = () => {
 		const data: { [key: string]: any } = {};
 		for (const key of this.context.workspaceState.keys()) {
 			data[key] = this.context.workspaceState.get(key);
