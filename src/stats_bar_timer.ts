@@ -2,16 +2,19 @@ import { DateTime, Duration, Interval } from 'luxon';
 import * as vscode from 'vscode';
 import { StartStopTimes } from './start_stop_times';
 
-type CommandName =
-	| 'startTimer'
-	| 'stopTimer'
-	| 'resetTimer'
-	| 'clickStatusBarItem'
-	| 'debugShowWorkspaceStorage'
-	| 'debugClearAllWorkspaceStorage'
+interface StatusBarCommands {
+	startTimer(): void;
+	stopTimer(): void;
+	resetTimer(): void;
+	clickStatusBarItem(): void;
+	debugShowWorkspaceStorage(): void;
+	debugClearAllWorkspaceStorage(): void;
+}
+
+type StatusBarCommandName = keyof StatusBarCommands
 
 // TODO: Replace checking this.startStopTimes.lastStartTime with an isRunning() function
-export class StatusBarTimer {
+export class StatusBarTimer implements StatusBarCommands {
 	constructor(
 		private context: vscode.ExtensionContext,
 		private startStopTimes: StartStopTimes,
@@ -37,7 +40,7 @@ export class StatusBarTimer {
 		console.log(`Extension ${this.context.extension.id} activated`);
 	};
 
-	private makeCommandId = (commandName: CommandName) => {
+	private makeCommandId = (commandName: StatusBarCommandName) => {
 		return `${this.context.extension.packageJSON.name}.${commandName}`;
 	};
 
@@ -97,7 +100,7 @@ export class StatusBarTimer {
 		this.statusBarItem.text = `$(${icon}) ${duration.toFormat('hh:mm:ss')}`;
 	};
 
-	private startTimer = () => {
+	startTimer = () => {
 		if (!this.startStopTimes.lastStartTime) {
 			this.startStopTimes.lastStartTime = DateTime.utc();
 		} else {
@@ -108,7 +111,7 @@ export class StatusBarTimer {
 		this.updateStatusBarItem();
 	};
 
-	private stopTimer = () => {
+	stopTimer = () => {
 		if (!this.startStopTimes.lastStartTime) {
 			vscode.window.showInformationMessage('Timer already stopped');
 		} else {
@@ -122,13 +125,13 @@ export class StatusBarTimer {
 		this.updateStatusBarItem();
 	};
 
-	private resetTimer = () => {
+	resetTimer = () => {
 		this.startStopTimes.reset();
 		this.startStopTimes.saveToStorage(this.context.workspaceState);
 		this.updateStatusBarItem();
 	};
 
-	private clickStatusBarItem = () => {
+	clickStatusBarItem = () => {
 		if (!this.startStopTimes.lastStartTime) {
 			this.startTimer();
 		} else {
@@ -136,7 +139,7 @@ export class StatusBarTimer {
 		}
 	};
 
-	private debugShowWorkspaceStorage = () => {
+	debugShowWorkspaceStorage = () => {
 		const data: { [key: string]: any } = {};
 		for (const key of this.context.workspaceState.keys()) {
 			data[key] = this.context.workspaceState.get(key);
@@ -149,7 +152,7 @@ export class StatusBarTimer {
 		}
 	};
 
-	private debugClearAllWorkspaceStorage = () => {
+	debugClearAllWorkspaceStorage = () => {
 		const no = 'No';
 		const yes = 'Yes';
 		vscode.window.showQuickPick(
