@@ -14,7 +14,9 @@ export class StatusBarTimer {
 	activate = () => {
 		this.startStopTimes.loadFromStorage(this.context.workspaceState);
 
-		this.registerCommands();
+		// TODO: Make includeDebugCommands a setting
+		const includeDebugCommands = true;
+		this.registerCommands(includeDebugCommands);
 
 		this.context.subscriptions.push(this.statusBarItem);
 
@@ -65,7 +67,6 @@ export class StatusBarTimer {
 
 			this.startStopTimes.saveToStorage(this.context.workspaceState);
 			this.updateStatusBarItem();
-
 		},
 
 		stopTimer: () => {
@@ -80,16 +81,12 @@ export class StatusBarTimer {
 
 			this.startStopTimes.saveToStorage(this.context.workspaceState);
 			this.updateStatusBarItem();
-
-
 		},
 
 		resetTimer: () => {
 			this.startStopTimes.reset();
 			this.startStopTimes.saveToStorage(this.context.workspaceState);
 			this.updateStatusBarItem();
-
-
 		},
 
 		clickStatusBarItem: () => {
@@ -132,25 +129,33 @@ export class StatusBarTimer {
 
 				vscode.window.showInformationMessage('Cleared workspace storage');
 			});
-
 		},
 	} as const;
+
+	private readonly debugCommandNames: (keyof typeof this.commands)[] = [
+		'debugShowWorkspaceStorage',
+		'debugClearAllWorkspaceStorage',
+	];
 
 	private makeCommandId = (commandName: keyof typeof this.commands) => {
 		return `${this.context.extension.packageJSON.name}.${commandName}`;
 	};
 
-	private registerCommand = (commandName: keyof typeof this.commands) => {
+	private registerCommand = (commandName: keyof typeof this.commands, includeDebugCommands: boolean) => {
+		if (!includeDebugCommands && this.debugCommandNames.includes(commandName)) {
+			return;
+		}
+
 		this.context.subscriptions.push(vscode.commands.registerCommand(
 			this.makeCommandId(commandName),
 			this.commands[commandName]
 		));
 	};
 
-	private registerCommands = () => {
-		let command: keyof typeof this.commands;
-		for (command in this.commands) {
-			this.registerCommand(command);
+	private registerCommands = (includeDebugCommands: boolean) => {
+		let commandName: keyof typeof this.commands;
+		for (commandName in this.commands) {
+			this.registerCommand(commandName, includeDebugCommands);
 		}
 		
 		this.statusBarItem.command = this.makeCommandId('clickStatusBarItem');
