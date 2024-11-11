@@ -148,13 +148,11 @@ export class StatusBarTimer {
 	};
 
 	private registerCommands = () => {
-		this.registerCommand('startTimer');
-		this.registerCommand('stopTimer');
-		this.registerCommand('resetTimer');
-		this.registerCommand('clickStatusBarItem');
-		this.registerCommand('debugShowWorkspaceStorage');
-		this.registerCommand('debugClearAllWorkspaceStorage');
-
+		let command: keyof typeof this.commands;
+		for (command in this.commands) {
+			this.registerCommand(command);
+		}
+		
 		this.statusBarItem.command = this.makeCommandId('clickStatusBarItem');
 	};
 }
