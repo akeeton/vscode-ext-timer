@@ -1,5 +1,5 @@
 {
-  "name": "status-bar-timer",
+  "name": "statusbartimer",
   "displayName": "Status Bar Timer",
   "description": "",
   "version": "0.0.1",
@@ -20,23 +20,23 @@
     "commands": [
       {
         "title": "Status Bar Timer: Start timer",
-        "command": "status-bar-timer.startTimer"
+        "command": "statusbartimer.startTimer"
       },
       {
         "title": "Status Bar Timer: Stop timer",
-        "command": "status-bar-timer.stopTimer"
+        "command": "statusbartimer.stopTimer"
       },
       {
         "title": "Status Bar Timer: Reset timer",
-        "command": "status-bar-timer.resetTimer"
+        "command": "statusbartimer.resetTimer"
       },
       {
         "title": "Status Bar Timer: Debug: Show workspace storage",
-        "command": "status-bar-timer.debugShowWorkspaceStorage"
+        "command": "statusbartimer.debugShowWorkspaceStorage"
       },
       {
         "title": "Status Bar Timer: Debug: Clear all workspace storage",
-        "command": "status-bar-timer.debugClearAllWorkspaceStorage"
+        "command": "statusbartimer.debugClearAllWorkspaceStorage"
       }
     ]
   },
