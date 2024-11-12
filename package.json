@@ -38,7 +38,17 @@
         "title": "Status Bar Timer: Debug: Clear all workspace storage",
         "command": "statusbartimer.debugClearAllWorkspaceStorage"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Status Bar Timer",
+      "properties": {
+        "statusbartimer.enableDebugCommands": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug commands"
+        }
+      }
+    }
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
