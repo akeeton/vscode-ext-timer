@@ -20,9 +20,8 @@ export class StatusBarTimer {
 
 		this.startStopTimes.loadFromStorage(this.context.workspaceState);
 
-		// TODO: Make includeDebugCommands a setting
-		const includeDebugCommands = true;
-		this.registerCommands(includeDebugCommands);
+		// const config = vscode.workspace.getConfiguration(this.getPackageName());
+		this.registerCommands();
 
 		this.context.subscriptions.push(this.statusBarItem);
 
@@ -151,24 +150,17 @@ export class StatusBarTimer {
 		return `${this.context.extension.packageJSON.name}.${commandName}`;
 	};
 
-	private registerCommand = (
-		commandName: keyof typeof this.commands,
-		includeDebugCommands: boolean
-	) => {
-		if (!includeDebugCommands && commandName.startsWith('debug')) {
-			return;
-		}
-
+	private registerCommand = (commandName: keyof typeof this.commands) => {
 		this.context.subscriptions.push(vscode.commands.registerCommand(
 			this.makeCommandId(commandName),
 			this.commands[commandName]
 		));
 	};
 
-	private registerCommands = (includeDebugCommands: boolean) => {
+	private registerCommands = () => {
 		let commandName: keyof typeof this.commands;
 		for (commandName in this.commands) {
-			this.registerCommand(commandName, includeDebugCommands);
+			this.registerCommand(commandName);
 		}
 
 		this.statusBarItem.command = this.makeCommandId('clickStatusBarItem');

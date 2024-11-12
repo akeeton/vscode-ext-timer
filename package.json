@@ -32,11 +32,13 @@
       },
       {
         "title": "Status Bar Timer: Debug: Show workspace storage",
-        "command": "statusbartimer.debugShowWorkspaceStorage"
+        "command": "statusbartimer.debugShowWorkspaceStorage",
+        "enablement": "config.statusbartimer.enableDebugCommands"
       },
       {
         "title": "Status Bar Timer: Debug: Clear all workspace storage",
-        "command": "statusbartimer.debugClearAllWorkspaceStorage"
+        "command": "statusbartimer.debugClearAllWorkspaceStorage",
+        "enablement": "config.statusbartimer.enableDebugCommands"
       }
     ],
     "configuration": {
