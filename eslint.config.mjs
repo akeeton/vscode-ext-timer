@@ -24,5 +24,15 @@ export default [{
         eqeqeq: "warn",
         "no-throw-literal": "warn",
         semi: "warn",
+
+        "prefer-arrow-callback": [
+            "warn",
+            { allowNamedFunctions: false }
+        ],
+        "func-style": [
+            "warn",
+            "expression",
+            { allowArrowFunctions: true }
+        ],
     },
 }];
