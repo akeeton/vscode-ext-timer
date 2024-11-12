@@ -132,17 +132,15 @@ export class StatusBarTimer {
 		},
 	} as const;
 
-	private readonly debugCommandNames: (keyof typeof this.commands)[] = [
-		'debugShowWorkspaceStorage',
-		'debugClearAllWorkspaceStorage',
-	];
-
 	private makeCommandId = (commandName: keyof typeof this.commands) => {
 		return `${this.context.extension.packageJSON.name}.${commandName}`;
 	};
 
-	private registerCommand = (commandName: keyof typeof this.commands, includeDebugCommands: boolean) => {
-		if (!includeDebugCommands && this.debugCommandNames.includes(commandName)) {
+	private registerCommand = (
+		commandName: keyof typeof this.commands,
+		includeDebugCommands: boolean
+	) => {
+		if (!includeDebugCommands && commandName.startsWith('debug')) {
 			return;
 		}
 
