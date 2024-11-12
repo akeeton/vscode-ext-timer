@@ -23,12 +23,13 @@ export class StatusBarTimer {
 		this.startStopTimes.loadFromStorage(this.context.workspaceState);
 
 		this.registerCommands();
+		this.registerEventHandlers();
 
 		this.context.subscriptions.push(this.statusBarItem);
 
-		// TODO: Move statusBarItemUpdateInMs to user settings
+		// TODO: Move statusBarItemUpdateInMs to user settings?
 		const statusBarItemUpdateInMs = 1000;
-		// TODO: Update only when timer is running
+		// TODO: Only update when timer is running
 		setInterval(this.updateStatusBarItem, statusBarItemUpdateInMs);
 		this.updateStatusBarItem();
 
@@ -45,8 +46,10 @@ export class StatusBarTimer {
 		return this.context.extension.packageJSON.name;
 	};
 
+	private getConfigSection = this.getPackageName;
+
 	private getConfig = (): vscode.WorkspaceConfiguration => {
-		return vscode.workspace.getConfiguration(this.getPackageName());
+		return vscode.workspace.getConfiguration(this.getConfigSection());
 	};
 
 	private updateStatusBarItem = () => {
@@ -167,5 +170,15 @@ export class StatusBarTimer {
 		}
 
 		this.statusBarItem.command = this.makeCommandId('clickStatusBarItem');
+	};
+
+	private registerEventHandlers = () => {
+		vscode.workspace.onDidChangeConfiguration((event) => {
+			if (!event.affectsConfiguration(this.getConfigSection())) {
+				return;
+			}
+
+			this.updateStatusBarItem();
+		});
 	};
 }
