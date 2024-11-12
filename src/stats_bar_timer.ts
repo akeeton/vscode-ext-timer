@@ -1,3 +1,4 @@
+import assert from 'assert';
 import { DateTime, Duration, Interval } from 'luxon';
 import * as vscode from 'vscode';
 import { StartStopTimes } from './start_stop_times';
@@ -12,6 +13,11 @@ export class StatusBarTimer {
 	}
 
 	activate = () => {
+		assert(
+			this.getPackageContributesConfig().title === this.getPackageDisplayName(),
+			'Display name and contributed configuration title should match'
+		);
+
 		this.startStopTimes.loadFromStorage(this.context.workspaceState);
 
 		// TODO: Make includeDebugCommands a setting
@@ -31,8 +37,16 @@ export class StatusBarTimer {
 		console.log(`Extension ${this.context.extension.id} activated`);
 	};
 
-	private getDisplayName = () => {
+	private getPackageContributesConfig = () => {
+		return this.context.extension.packageJSON.contributes.configuration;
+	};
+
+	private getPackageDisplayName = () => {
 		return this.context.extension.packageJSON.displayName;
+	};
+
+	private getPackageName = () => {
+		return this.context.extension.packageJSON.name;
 	};
 
 	private updateStatusBarItem = () => {
@@ -84,6 +98,7 @@ export class StatusBarTimer {
 		},
 
 		resetTimer: () => {
+			// TODO: Add confirmation quickpick
 			this.startStopTimes.reset();
 			this.startStopTimes.saveToStorage(this.context.workspaceState);
 			this.updateStatusBarItem();
@@ -115,7 +130,7 @@ export class StatusBarTimer {
 			const yes = 'Yes';
 			vscode.window.showQuickPick(
 				[no, yes],
-				{ title: `Clear all workspace storage for ${this.getDisplayName()}?` }
+				{ title: `Clear all workspace storage for ${this.getPackageDisplayName()}?` }
 			).then((value) => {
 				if (value !== yes) {
 					return;
@@ -155,7 +170,7 @@ export class StatusBarTimer {
 		for (commandName in this.commands) {
 			this.registerCommand(commandName, includeDebugCommands);
 		}
-		
+
 		this.statusBarItem.command = this.makeCommandId('clickStatusBarItem');
 	};
 }
