@@ -47,7 +47,12 @@
         "statusbartimer.enableDebugCommands": {
           "type": "boolean",
           "default": false,
-          "description": "Enable debug commands"
+          "description": "Specifies whether debug commands should be enabled. Requires window reload if changed."
+        },
+        "statusbartimer.durationFormat": {
+          "type": "string",
+          "default": "hh:mm:ss",
+          "markdownDescription": "Specifies how to format the duration displayed in the status bar. See the [Luxon docs](https://moment.github.io/luxon/api-docs/index.html#durationtoformat) for details."
         }
       }
     }

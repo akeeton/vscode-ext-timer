@@ -7,6 +7,7 @@ import { StartStopTimes } from './start_stop_times';
 export class StatusBarTimer {
 	constructor(
 		private context: vscode.ExtensionContext,
+		// TODO: Construct these instead of injecting them?
 		private startStopTimes: StartStopTimes,
 		private statusBarItem: vscode.StatusBarItem
 	) {
@@ -14,13 +15,13 @@ export class StatusBarTimer {
 
 	activate = () => {
 		assert(
-			this.getPackageContributesConfig().title === this.getPackageDisplayName(),
+			this.context.extension.packageJSON.contributes.configuration.title
+			=== this.getPackageDisplayName(),
 			'Display name and contributed configuration title should match'
 		);
 
 		this.startStopTimes.loadFromStorage(this.context.workspaceState);
 
-		// const config = vscode.workspace.getConfiguration(this.getPackageName());
 		this.registerCommands();
 
 		this.context.subscriptions.push(this.statusBarItem);
@@ -36,16 +37,16 @@ export class StatusBarTimer {
 		console.log(`Extension ${this.context.extension.id} activated`);
 	};
 
-	private getPackageContributesConfig = () => {
-		return this.context.extension.packageJSON.contributes.configuration;
-	};
-
-	private getPackageDisplayName = () => {
+	private getPackageDisplayName = (): string => {
 		return this.context.extension.packageJSON.displayName;
 	};
 
-	private getPackageName = () => {
+	private getPackageName = (): string => {
 		return this.context.extension.packageJSON.name;
+	};
+
+	private getConfig = (): vscode.WorkspaceConfiguration => {
+		return vscode.workspace.getConfiguration(this.getPackageName());
 	};
 
 	private updateStatusBarItem = () => {
@@ -65,9 +66,11 @@ export class StatusBarTimer {
 			return durationAcc.plus(duration);
 		}, Duration.fromObject({}));
 
-		const icon = this.startStopTimes.lastStartTime ? 'stop-circle' : 'clock';
-		// TODO: Make format a user setting?
-		this.statusBarItem.text = `$(${icon}) ${duration.toFormat('hh:mm:ss')}`;
+		// TODO: Cache durationFormat config setting?
+		const format = this.getConfig().durationFormat as string;
+		// See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
+		const icon = this.startStopTimes.lastStartTime ? 'clock' : 'stop-circle';
+		this.statusBarItem.text = `$(${icon}) ${duration.toFormat(format)}`;
 	};
 
 	private readonly commands = {
