@@ -3,7 +3,6 @@ import { DateTime, Duration, Interval } from 'luxon';
 import * as vscode from 'vscode';
 import StartStopTimes from './StartStopTimes';
 
-// TODO Use `export default new StatusBarTimer()` instead of `export default class StatusBarTimer`?
 // TODO Replace checking this.startStopTimes.lastStartTime with an isRunning() function
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
 export default class StatusBarTimer {
