@@ -6,7 +6,7 @@ type StartStopTimesDto = {
 	intervals: string[];
 }
 
-export class StartStopTimes {
+export default class StartStopTimes {
 	lastStartTime?: DateTime;
 	intervals: Interval[] = [];
 

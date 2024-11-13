@@ -1,11 +1,11 @@
 import assert from 'assert';
 import { DateTime, Duration, Interval } from 'luxon';
 import * as vscode from 'vscode';
-import { StartStopTimes } from './start_stop_times';
+import StartStopTimes from './StartStopTimes';
 
 // TODO Replace checking this.startStopTimes.lastStartTime with an isRunning() function
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
-export class StatusBarTimer {
+export default class StatusBarTimer {
 	constructor(
 		private context: vscode.ExtensionContext,
 		// TODO Construct these instead of injecting them?
