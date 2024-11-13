@@ -7,11 +7,11 @@ import StartStopTimes from './StartStopTimes';
 // TODO Replace checking this.startStopTimes.lastStartTime with an isRunning() function
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
 export default class StatusBarTimer {
+	private statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+
 	constructor(
 		private context: vscode.ExtensionContext,
-		// TODO Construct these instead of injecting them?
 		private startStopTimes: StartStopTimes,
-		private statusBarItem: vscode.StatusBarItem
 	) {
 	}
 

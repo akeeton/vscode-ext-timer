@@ -5,8 +5,7 @@ import StatusBarTimer from './StatusBarTimer';
 export function activate(context: vscode.ExtensionContext) {
 	const statusBarTimer = new StatusBarTimer(
 		context,
-		new StartStopTimes(),
-		vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right)
+		new StartStopTimes()
 	);
 
 	statusBarTimer.activate();
