@@ -6,7 +6,6 @@ type StartStopTimesDto = {
 	intervals: string[];
 }
 
-// TODO: Somehow finish open interval and save to storage on shutdown
 export class StartStopTimes {
 	lastStartTime?: DateTime;
 	intervals: Interval[] = [];

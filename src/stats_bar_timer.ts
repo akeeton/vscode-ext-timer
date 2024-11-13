@@ -3,11 +3,12 @@ import { DateTime, Duration, Interval } from 'luxon';
 import * as vscode from 'vscode';
 import { StartStopTimes } from './start_stop_times';
 
-// TODO: Replace checking this.startStopTimes.lastStartTime with an isRunning() function
+// TODO Replace checking this.startStopTimes.lastStartTime with an isRunning() function
+// TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
 export class StatusBarTimer {
 	constructor(
 		private context: vscode.ExtensionContext,
-		// TODO: Construct these instead of injecting them?
+		// TODO Construct these instead of injecting them?
 		private startStopTimes: StartStopTimes,
 		private statusBarItem: vscode.StatusBarItem
 	) {
@@ -27,9 +28,9 @@ export class StatusBarTimer {
 
 		this.context.subscriptions.push(this.statusBarItem);
 
-		// TODO: Move statusBarItemUpdateInMs to user settings?
+		// TODO Move statusBarItemUpdateInMs to user settings?
 		const statusBarItemUpdateInMs = 1000;
-		// TODO: Only update when timer is running
+		// TODO Only update when timer is running
 		setInterval(this.updateStatusBarItem, statusBarItemUpdateInMs);
 		this.updateStatusBarItem();
 
@@ -53,7 +54,7 @@ export class StatusBarTimer {
 	};
 
 	private updateStatusBarItem = () => {
-		// TODO: Move all time-based code to StartStopTimes class and remove luxon import from this file
+		// TODO Move all time-based code to StartStopTimes class and remove luxon import from this file
 		let intervalsStoppedNow: Interval[];
 		if (!this.startStopTimes.lastStartTime) {
 			intervalsStoppedNow = this.startStopTimes.intervals;
@@ -69,7 +70,7 @@ export class StatusBarTimer {
 			return durationAcc.plus(duration);
 		}, Duration.fromObject({}));
 
-		// TODO: Cache durationFormat config setting?
+		// TODO Cache durationFormat config setting?
 		const format = this.getConfig().durationFormat as string;
 		// See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
 		const icon = this.startStopTimes.lastStartTime ? 'clock' : 'stop-circle';
@@ -103,7 +104,7 @@ export class StatusBarTimer {
 		},
 
 		resetTimer: () => {
-			// TODO: Add confirmation quickpick
+			// TODO Add confirmation quickpick
 			this.startStopTimes.reset();
 			this.startStopTimes.saveToStorage(this.context.workspaceState);
 			this.updateStatusBarItem();
