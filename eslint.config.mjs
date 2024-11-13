@@ -2,6 +2,7 @@
 // Adapted from `yo code` generator and then https://typescript-eslint.io/users/configs/
 
 import eslint from "@eslint/js";
+import stylisticTs from "@stylistic/eslint-plugin-ts";
 import tseslint from "typescript-eslint";
 
 /** @type {import('@typescript-eslint/utils').TSESLint.FlatConfig.ConfigFile} */
@@ -14,6 +15,7 @@ export default [
         files: ["**/*.ts"],
     }, {
         plugins: {
+            "@stylistic/ts": stylisticTs,
             "@typescript-eslint": tseslint.plugin,
         },
         languageOptions: {
@@ -29,6 +31,7 @@ export default [
         },
 
         rules: {
+            "@stylistic/ts/semi": "warn",
             "@typescript-eslint/naming-convention": ["warn", {
                 selector: "import",
                 format: ["camelCase", "PascalCase"],
@@ -37,6 +40,5 @@ export default [
             curly: "warn",
             eqeqeq: "warn",
             "no-throw-literal": "warn",
-            semi: "warn",
         },
     }];
