@@ -1,28 +1,42 @@
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
+// @ts-check
+// Adapted from `yo code` generator and then https://typescript-eslint.io/users/configs/
 
-export default [{
-    files: ["**/*.ts"],
-}, {
-    plugins: {
-        "@typescript-eslint": typescriptEslint,
-    },
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
 
-    languageOptions: {
-        parser: tsParser,
-        ecmaVersion: 2022,
-        sourceType: "module",
-    },
+/** @type {import('@typescript-eslint/utils').TSESLint.FlatConfig.ConfigFile} */
+export default [
+    eslint.configs.recommended,
+    // ...tseslint.configs.recommendedTypeChecked,
+    ...tseslint.configs.strictTypeChecked,
+    ...tseslint.configs.stylisticTypeChecked,
+    {
+        files: ["**/*.ts"],
+    }, {
+        plugins: {
+            "@typescript-eslint": tseslint.plugin,
+        },
+        languageOptions: {
+            parser: tseslint.parser,
+            ecmaVersion: 2022,
+            sourceType: "module",
+            parserOptions: {
+                projectService: {
+                    allowDefaultProject: ['eslint.config.mjs'],
+                },
+                tsconfigRootDir: import.meta.dirname,
+            }
+        },
 
-    rules: {
-        "@typescript-eslint/naming-convention": ["warn", {
-            selector: "import",
-            format: ["camelCase", "PascalCase"],
-        }],
+        rules: {
+            "@typescript-eslint/naming-convention": ["warn", {
+                selector: "import",
+                format: ["camelCase", "PascalCase"],
+            }],
 
-        curly: "warn",
-        eqeqeq: "warn",
-        "no-throw-literal": "warn",
-        semi: "warn",
-    },
-}];
+            curly: "warn",
+            eqeqeq: "warn",
+            "no-throw-literal": "warn",
+            semi: "warn",
+        },
+    }];
