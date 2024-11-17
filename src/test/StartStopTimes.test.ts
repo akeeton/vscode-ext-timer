@@ -3,14 +3,14 @@ import { DateTime } from "luxon";
 import { StartStopTimes } from "../StartStopTimes";
 
 suite("StartStopTimes Test Suite", () => {
-  test("isStopped() is true when there's no last start time", () => {
-    assert.strictEqual(new StartStopTimes().isStopped(), true);
+  test("isStarted() is true when there's a last start time", () => {
+    assert.strictEqual(
+      new StartStopTimes([], DateTime.utc()).isStarted(),
+      true,
+    );
   });
 
-  test("isStopped() is false when there's a last start time", () => {
-    assert.strictEqual(
-      new StartStopTimes([], DateTime.utc()).isStopped(),
-      false,
-    );
+  test("isStarted() is false when there's no last start time", () => {
+    assert.strictEqual(new StartStopTimes().isStarted(), false);
   });
 });
