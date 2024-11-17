@@ -1,7 +1,7 @@
-import { DateTime, Duration, Interval } from 'luxon';
+import { DateTime, Interval } from 'luxon';
 import { Memento } from 'vscode';
 
-type StartStopTimesDto = {
+interface StartStopTimesDto {
 	lastStartTime?: string;
 	intervals: string[];
 }

@@ -1,7 +1,18 @@
 import assert from 'assert';
 import { DateTime, Duration, Interval } from 'luxon';
+import { PackageJson } from 'type-fest';
 import * as vscode from 'vscode';
 import StartStopTimes from './StartStopTimes';
+
+type VSCodePackageJson = PackageJson & {
+	name: string,
+	displayName: string,
+	contributes: {
+		configuration: {
+			title: string
+		}
+	}
+};
 
 // TODO Replace checking this.startStopTimes.lastStartTime with an isRunning() function
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
@@ -16,8 +27,8 @@ export default class StatusBarTimer {
 
 	activate = () => {
 		assert(
-			this.context.extension.packageJSON.contributes.configuration.title
-			=== this.getPackageDisplayName(),
+			this.getPackageJson().contributes.configuration.title
+			=== this.getPackageJson().displayName,
 			'Display name and contributed configuration title should match'
 		);
 
@@ -39,15 +50,13 @@ export default class StatusBarTimer {
 		console.log(`Extension ${this.context.extension.id} activated`);
 	};
 
-	private getPackageDisplayName = (): string => {
-		return this.context.extension.packageJSON.displayName;
+	private getPackageJson = (): VSCodePackageJson => {
+		return this.context.extension.packageJSON as VSCodePackageJson;
 	};
 
-	private getPackageName = (): string => {
-		return this.context.extension.packageJSON.name;
+	private getConfigSection = () => {
+		return this.getPackageJson().name;
 	};
-
-	private getConfigSection = this.getPackageName;
 
 	private getConfig = (): vscode.WorkspaceConfiguration => {
 		return vscode.workspace.getConfiguration(this.getConfigSection());
@@ -85,6 +94,7 @@ export default class StatusBarTimer {
 				vscode.window.showInformationMessage('Timer already started');
 			}
 
+			// TODO Do saving here instead of in StartStopTimes?
 			this.startStopTimes.saveToStorage(this.context.workspaceState);
 			this.updateStatusBarItem();
 		},
@@ -119,7 +129,7 @@ export default class StatusBarTimer {
 		},
 
 		debugShowWorkspaceStorage: () => {
-			const data: { [key: string]: any } = {};
+			const data: Record<string, unknown> = {};
 			for (const key of this.context.workspaceState.keys()) {
 				data[key] = this.context.workspaceState.get(key);
 			}
@@ -136,7 +146,7 @@ export default class StatusBarTimer {
 			const yes = 'Yes';
 			vscode.window.showQuickPick(
 				[no, yes],
-				{ title: `Clear all workspace storage for ${this.getPackageDisplayName()}?` }
+				{ title: `Clear all workspace storage for ${this.getPackageJson().displayName}?` }
 			).then((value) => {
 				if (value !== yes) {
 					return;
@@ -154,7 +164,7 @@ export default class StatusBarTimer {
 	} as const;
 
 	private makeCommandId = (commandName: keyof typeof this.commands) => {
-		return `${this.context.extension.packageJSON.name}.${commandName}`;
+		return `${this.getPackageJson().name}.${commandName}`;
 	};
 
 	private registerCommand = (commandName: keyof typeof this.commands) => {
