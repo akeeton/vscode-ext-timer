@@ -1,195 +1,207 @@
-import assert from 'assert';
-import { DateTime, Duration, Interval } from 'luxon';
-import { PackageJson } from 'type-fest';
-import * as vscode from 'vscode';
-import StartStopTimes from './StartStopTimes';
+import assert from "assert";
+import { DateTime, Duration, Interval } from "luxon";
+import { PackageJson } from "type-fest";
+import * as vscode from "vscode";
+import StartStopTimes from "./StartStopTimes";
 
 type VSCodePackageJson = PackageJson & {
-	name: string,
-	displayName: string,
-	contributes: {
-		configuration: {
-			title: string
-		}
-	}
+  name: string;
+  displayName: string;
+  contributes: {
+    configuration: {
+      title: string;
+    };
+  };
 };
 
 // TODO Replace checking this.startStopTimes.lastStartTime with an isRunning() function
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
 export default class StatusBarTimer {
-	private statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+  private statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+  );
 
-	constructor(
-		private context: vscode.ExtensionContext,
-		private startStopTimes: StartStopTimes,
-	) {
-	}
+  constructor(
+    private context: vscode.ExtensionContext,
+    private startStopTimes: StartStopTimes,
+  ) {}
 
-	activate = () => {
-		assert(
-			this.getPackageJson().contributes.configuration.title
-			=== this.getPackageJson().displayName,
-			'Display name and contributed configuration title should match'
-		);
+  activate = () => {
+    assert(
+      this.getPackageJson().contributes.configuration.title ===
+        this.getPackageJson().displayName,
+      "Display name and contributed configuration title should match",
+    );
 
-		this.startStopTimes.loadFromStorage(this.context.workspaceState);
+    this.startStopTimes.loadFromStorage(this.context.workspaceState);
 
-		this.registerCommands();
-		this.registerEventHandlers();
+    this.registerCommands();
+    this.registerEventHandlers();
 
-		this.context.subscriptions.push(this.statusBarItem);
+    this.context.subscriptions.push(this.statusBarItem);
 
-		// TODO Move statusBarItemUpdateInMs to user settings?
-		const statusBarItemUpdateInMs = 1000;
-		// TODO Only update when timer is running
-		setInterval(this.updateStatusBarItem, statusBarItemUpdateInMs);
-		this.updateStatusBarItem();
+    // TODO Move statusBarItemUpdateInMs to user settings?
+    const statusBarItemUpdateInMs = 1000;
+    // TODO Only update when timer is running
+    setInterval(this.updateStatusBarItem, statusBarItemUpdateInMs);
+    this.updateStatusBarItem();
 
-		this.statusBarItem.show();
+    this.statusBarItem.show();
 
-		console.log(`Extension ${this.context.extension.id} activated`);
-	};
+    console.log(`Extension ${this.context.extension.id} activated`);
+  };
 
-	private getPackageJson = (): VSCodePackageJson => {
-		return this.context.extension.packageJSON as VSCodePackageJson;
-	};
+  private getPackageJson = (): VSCodePackageJson => {
+    return this.context.extension.packageJSON as VSCodePackageJson;
+  };
 
-	private getConfigSection = () => {
-		return this.getPackageJson().name;
-	};
+  private getConfigSection = () => {
+    return this.getPackageJson().name;
+  };
 
-	private getConfig = (): vscode.WorkspaceConfiguration => {
-		return vscode.workspace.getConfiguration(this.getConfigSection());
-	};
+  private getConfig = (): vscode.WorkspaceConfiguration => {
+    return vscode.workspace.getConfiguration(this.getConfigSection());
+  };
 
-	private updateStatusBarItem = () => {
-		// TODO Move all time-based code to StartStopTimes class and remove luxon import from this file
-		let intervalsStoppedNow: Interval[];
-		if (!this.startStopTimes.lastStartTime) {
-			intervalsStoppedNow = this.startStopTimes.intervals;
-		} else {
-			intervalsStoppedNow = this.startStopTimes.intervals.concat(
-				Interval.fromDateTimes(this.startStopTimes.lastStartTime, DateTime.utc())
-			);
-		}
+  private updateStatusBarItem = () => {
+    // TODO Move all time-based code to StartStopTimes class and remove luxon import from this file
+    let intervalsStoppedNow: Interval[];
+    if (!this.startStopTimes.lastStartTime) {
+      intervalsStoppedNow = this.startStopTimes.intervals;
+    } else {
+      intervalsStoppedNow = this.startStopTimes.intervals.concat(
+        Interval.fromDateTimes(
+          this.startStopTimes.lastStartTime,
+          DateTime.utc(),
+        ),
+      );
+    }
 
-		const duration = intervalsStoppedNow.map((interval) => {
-			return interval.toDuration();
-		}).reduce((durationAcc, duration) => {
-			return durationAcc.plus(duration);
-		}, Duration.fromObject({}));
+    const duration = intervalsStoppedNow
+      .map((interval) => {
+        return interval.toDuration();
+      })
+      .reduce((durationAcc, duration) => {
+        return durationAcc.plus(duration);
+      }, Duration.fromObject({}));
 
-		// TODO Cache durationFormat config setting?
-		const format = this.getConfig().durationFormat as string;
-		// See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
-		const icon = this.startStopTimes.lastStartTime ? 'clock' : 'stop-circle';
-		this.statusBarItem.text = `$(${icon}) ${duration.toFormat(format)}`;
-	};
+    // TODO Cache durationFormat config setting?
+    const format = this.getConfig().durationFormat as string;
+    // See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
+    const icon = this.startStopTimes.lastStartTime ? "clock" : "stop-circle";
+    this.statusBarItem.text = `$(${icon}) ${duration.toFormat(format)}`;
+  };
 
-	private readonly commands = {
-		startTimer: () => {
-			if (!this.startStopTimes.lastStartTime) {
-				this.startStopTimes.lastStartTime = DateTime.utc();
-			} else {
-				vscode.window.showInformationMessage('Timer already started');
-			}
+  private readonly commands = {
+    startTimer: () => {
+      if (!this.startStopTimes.lastStartTime) {
+        this.startStopTimes.lastStartTime = DateTime.utc();
+      } else {
+        vscode.window.showInformationMessage("Timer already started");
+      }
 
-			// TODO Do saving here instead of in StartStopTimes?
-			this.startStopTimes.saveToStorage(this.context.workspaceState);
-			this.updateStatusBarItem();
-		},
+      // TODO Do saving here instead of in StartStopTimes?
+      this.startStopTimes.saveToStorage(this.context.workspaceState);
+      this.updateStatusBarItem();
+    },
 
-		stopTimer: () => {
-			if (!this.startStopTimes.lastStartTime) {
-				vscode.window.showInformationMessage('Timer already stopped');
-			} else {
-				this.startStopTimes.intervals.push(
-					Interval.fromDateTimes(this.startStopTimes.lastStartTime, DateTime.utc())
-				);
-				this.startStopTimes.lastStartTime = undefined;
-			}
+    stopTimer: () => {
+      if (!this.startStopTimes.lastStartTime) {
+        vscode.window.showInformationMessage("Timer already stopped");
+      } else {
+        this.startStopTimes.intervals.push(
+          Interval.fromDateTimes(
+            this.startStopTimes.lastStartTime,
+            DateTime.utc(),
+          ),
+        );
+        this.startStopTimes.lastStartTime = undefined;
+      }
 
-			this.startStopTimes.saveToStorage(this.context.workspaceState);
-			this.updateStatusBarItem();
-		},
+      this.startStopTimes.saveToStorage(this.context.workspaceState);
+      this.updateStatusBarItem();
+    },
 
-		resetTimer: () => {
-			// TODO Add confirmation quickpick
-			this.startStopTimes.reset();
-			this.startStopTimes.saveToStorage(this.context.workspaceState);
-			this.updateStatusBarItem();
-		},
+    resetTimer: () => {
+      // TODO Add confirmation quickpick
+      this.startStopTimes.reset();
+      this.startStopTimes.saveToStorage(this.context.workspaceState);
+      this.updateStatusBarItem();
+    },
 
-		clickStatusBarItem: () => {
-			if (!this.startStopTimes.lastStartTime) {
-				this.commands.startTimer();
-			} else {
-				this.commands.stopTimer();
-			}
-		},
+    clickStatusBarItem: () => {
+      if (!this.startStopTimes.lastStartTime) {
+        this.commands.startTimer();
+      } else {
+        this.commands.stopTimer();
+      }
+    },
 
-		debugShowWorkspaceStorage: () => {
-			const data: Record<string, unknown> = {};
-			for (const key of this.context.workspaceState.keys()) {
-				data[key] = this.context.workspaceState.get(key);
-			}
+    debugShowWorkspaceStorage: () => {
+      const data: Record<string, unknown> = {};
+      for (const key of this.context.workspaceState.keys()) {
+        data[key] = this.context.workspaceState.get(key);
+      }
 
-			if (data.length === 0) {
-				console.log('Workspace storage empty');
-			} else {
-				console.log(`Workspace storage:\n${JSON.stringify(data, null, 2)}`);
-			}
-		},
+      if (data.length === 0) {
+        console.log("Workspace storage empty");
+      } else {
+        console.log(`Workspace storage:\n${JSON.stringify(data, null, 2)}`);
+      }
+    },
 
-		debugClearAllWorkspaceStorage: () => {
-			const no = 'No';
-			const yes = 'Yes';
-			vscode.window.showQuickPick(
-				[no, yes],
-				{ title: `Clear all workspace storage for ${this.getPackageJson().displayName}?` }
-			).then((value) => {
-				if (value !== yes) {
-					return;
-				}
+    debugClearAllWorkspaceStorage: () => {
+      const no = "No";
+      const yes = "Yes";
+      vscode.window
+        .showQuickPick([no, yes], {
+          title: `Clear all workspace storage for ${this.getPackageJson().displayName}?`,
+        })
+        .then((value) => {
+          if (value !== yes) {
+            return;
+          }
 
-				for (const key of this.context.workspaceState.keys()) {
-					this.context.workspaceState.update(key, undefined);
-				}
+          for (const key of this.context.workspaceState.keys()) {
+            this.context.workspaceState.update(key, undefined);
+          }
 
-				this.startStopTimes.loadFromStorage(this.context.workspaceState);
+          this.startStopTimes.loadFromStorage(this.context.workspaceState);
 
-				vscode.window.showInformationMessage('Cleared workspace storage');
-			});
-		},
-	} as const;
+          vscode.window.showInformationMessage("Cleared workspace storage");
+        });
+    },
+  } as const;
 
-	private makeCommandId = (commandName: keyof typeof this.commands) => {
-		return `${this.getPackageJson().name}.${commandName}`;
-	};
+  private makeCommandId = (commandName: keyof typeof this.commands) => {
+    return `${this.getPackageJson().name}.${commandName}`;
+  };
 
-	private registerCommand = (commandName: keyof typeof this.commands) => {
-		this.context.subscriptions.push(vscode.commands.registerCommand(
-			this.makeCommandId(commandName),
-			this.commands[commandName]
-		));
-	};
+  private registerCommand = (commandName: keyof typeof this.commands) => {
+    this.context.subscriptions.push(
+      vscode.commands.registerCommand(
+        this.makeCommandId(commandName),
+        this.commands[commandName],
+      ),
+    );
+  };
 
-	private registerCommands = () => {
-		let commandName: keyof typeof this.commands;
-		for (commandName in this.commands) {
-			this.registerCommand(commandName);
-		}
+  private registerCommands = () => {
+    let commandName: keyof typeof this.commands;
+    for (commandName in this.commands) {
+      this.registerCommand(commandName);
+    }
 
-		this.statusBarItem.command = this.makeCommandId('clickStatusBarItem');
-	};
+    this.statusBarItem.command = this.makeCommandId("clickStatusBarItem");
+  };
 
-	private registerEventHandlers = () => {
-		vscode.workspace.onDidChangeConfiguration((event) => {
-			if (!event.affectsConfiguration(this.getConfigSection())) {
-				return;
-			}
+  private registerEventHandlers = () => {
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (!event.affectsConfiguration(this.getConfigSection())) {
+        return;
+      }
 
-			this.updateStatusBarItem();
-		});
-	};
+      this.updateStatusBarItem();
+    });
+  };
 }
