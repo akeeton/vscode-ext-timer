@@ -66,7 +66,6 @@ export default class StatusBarTimer {
     );
 
     this.loadState();
-
     this.registerCommands();
     this.registerEventHandlers();
 
@@ -96,16 +95,16 @@ export default class StatusBarTimer {
   };
 
   private loadState = (): void => {
-    const workspaceStateDto = this.context.workspaceState.get<StateDto>(
+    const stateDto = this.context.workspaceState.get<StateDto>(
       this.stateStorageKey,
     );
 
-    if (!workspaceStateDto) {
+    if (!stateDto) {
       this.state = new State(new StartStopTimes());
       return;
     }
 
-    this.state = State.fromDto(workspaceStateDto);
+    this.state = State.fromDto(stateDto);
   };
 
   private saveState = (): void => {
