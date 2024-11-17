@@ -2,7 +2,7 @@ import assert from "assert";
 import { DateTime, Duration, Interval } from "luxon";
 import { PackageJson } from "type-fest";
 import * as vscode from "vscode";
-import StartStopTimes from "./StartStopTimes";
+import { StartStopTimes, StartStopTimesDto } from "./StartStopTimes";
 
 type VSCodePackageJson = PackageJson & {
   name: string;
@@ -14,27 +14,43 @@ type VSCodePackageJson = PackageJson & {
   };
 };
 
+interface WorkspaceStateDto {
+  startStopTimes: StartStopTimesDto;
+}
+
+class WorkspaceState {
+  startStopTimes: StartStopTimes;
+
+  constructor(startStopTimes: StartStopTimes) {
+    this.startStopTimes = startStopTimes;
+  }
+
+  static fromDto = (dto: WorkspaceStateDto): WorkspaceState => {
+    return new WorkspaceState(StartStopTimes.fromDto(dto.startStopTimes));
+  };
+
+  toDto = (): WorkspaceStateDto => {
+    return {
+      startStopTimes: this.startStopTimes.toDto(),
+    };
+  };
+}
+
 // TODO Replace checking this.startStopTimes.lastStartTime with an isRunning() function
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
 export default class StatusBarTimer {
+  private context: vscode.ExtensionContext;
+  private workspaceStateKey: string;
+
+  private workspaceState = new WorkspaceState(new StartStopTimes());
   private statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
   );
 
-  constructor(
-    private context: vscode.ExtensionContext,
-    private startStopTimes: StartStopTimes,
-  ) {}
-
-  private loadWorkspaceState = (): void => {
-    this.startStopTimes = StartStopTimes.loadFromStorage(
-      this.context.workspaceState,
-    );
-  };
-
-  private saveWorkspaceState = (): void => {
-    this.startStopTimes.saveToStorage(this.context.workspaceState);
-  };
+  constructor(context: vscode.ExtensionContext, workspaceStateKey: string) {
+    this.context = context;
+    this.workspaceStateKey = workspaceStateKey;
+  }
 
   activate = () => {
     assert(
@@ -73,15 +89,36 @@ export default class StatusBarTimer {
     return vscode.workspace.getConfiguration(this.getConfigSection());
   };
 
+  private loadWorkspaceState = (): void => {
+    const workspaceStateDto =
+      this.context.workspaceState.get<WorkspaceStateDto>(
+        this.workspaceStateKey,
+      );
+
+    if (!workspaceStateDto) {
+      this.workspaceState = new WorkspaceState(new StartStopTimes());
+      return;
+    }
+
+    this.workspaceState = WorkspaceState.fromDto(workspaceStateDto);
+  };
+
+  private saveWorkspaceState = (): void => {
+    this.context.workspaceState.update(
+      this.workspaceStateKey,
+      this.workspaceState.toDto(),
+    );
+  };
+
   private updateStatusBarItem = () => {
     // TODO Move all time-based code to StartStopTimes class and remove luxon import from this file
     let intervalsStoppedNow: Interval[];
-    if (!this.startStopTimes.lastStartTime) {
-      intervalsStoppedNow = this.startStopTimes.intervals;
+    if (!this.workspaceState.startStopTimes.lastStartTime) {
+      intervalsStoppedNow = this.workspaceState.startStopTimes.intervals;
     } else {
-      intervalsStoppedNow = this.startStopTimes.intervals.concat(
+      intervalsStoppedNow = this.workspaceState.startStopTimes.intervals.concat(
         Interval.fromDateTimes(
-          this.startStopTimes.lastStartTime,
+          this.workspaceState.startStopTimes.lastStartTime,
           DateTime.utc(),
         ),
       );
@@ -98,49 +135,50 @@ export default class StatusBarTimer {
     // TODO Cache durationFormat config setting?
     const format = this.getConfig().durationFormat as string;
     // See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
-    const icon = this.startStopTimes.lastStartTime ? "clock" : "stop-circle";
+    const icon = this.workspaceState.startStopTimes.lastStartTime
+      ? "clock"
+      : "stop-circle";
     this.statusBarItem.text = `$(${icon}) ${duration.toFormat(format)}`;
   };
 
   private readonly commands = {
     startTimer: () => {
-      if (!this.startStopTimes.lastStartTime) {
-        this.startStopTimes.lastStartTime = DateTime.utc();
+      if (!this.workspaceState.startStopTimes.lastStartTime) {
+        this.workspaceState.startStopTimes.lastStartTime = DateTime.utc();
       } else {
         vscode.window.showInformationMessage("Timer already started");
       }
 
-      // TODO Do saving here instead of in StartStopTimes?
-      this.startStopTimes.saveToStorage(this.context.workspaceState);
+      this.saveWorkspaceState();
       this.updateStatusBarItem();
     },
 
     stopTimer: () => {
-      if (!this.startStopTimes.lastStartTime) {
+      if (!this.workspaceState.startStopTimes.lastStartTime) {
         vscode.window.showInformationMessage("Timer already stopped");
       } else {
-        this.startStopTimes.intervals.push(
+        this.workspaceState.startStopTimes.intervals.push(
           Interval.fromDateTimes(
-            this.startStopTimes.lastStartTime,
+            this.workspaceState.startStopTimes.lastStartTime,
             DateTime.utc(),
           ),
         );
-        this.startStopTimes.lastStartTime = undefined;
+        this.workspaceState.startStopTimes.lastStartTime = undefined;
       }
 
-      this.startStopTimes.saveToStorage(this.context.workspaceState);
+      this.saveWorkspaceState();
       this.updateStatusBarItem();
     },
 
     resetTimer: () => {
       // TODO Add confirmation quickpick
-      this.startStopTimes = new StartStopTimes();
+      this.workspaceState.startStopTimes = new StartStopTimes();
       this.saveWorkspaceState();
       this.updateStatusBarItem();
     },
 
     clickStatusBarItem: () => {
-      if (!this.startStopTimes.lastStartTime) {
+      if (!this.workspaceState.startStopTimes.lastStartTime) {
         this.commands.startTimer();
       } else {
         this.commands.stopTimer();
