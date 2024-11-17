@@ -1,27 +1,56 @@
 import { DateTime, Duration, Interval } from "luxon";
 
+interface LastStartTimeDto {
+  time?: string;
+}
+
+export class LastStartTime {
+  time?: DateTime;
+
+  constructor(time?: DateTime) {
+    this.time = time;
+  }
+
+  isStarted = (): this is { time: LastStartTime } => {
+    return this.time !== undefined;
+  };
+
+  static fromDto = (dto: LastStartTimeDto): LastStartTime => {
+    if (!dto.time) {
+      return new LastStartTime();
+    }
+
+    return new LastStartTime(DateTime.fromISO(dto.time));
+  };
+
+  toDto = (): LastStartTimeDto => {
+    return {
+      time: this.time?.toISO() ?? undefined,
+    };
+  };
+}
+
 export interface StartStopTimesDto {
-  lastStartTime?: string;
+  lastStartTime: LastStartTimeDto;
   intervals: string[];
 }
 
 // TODO Write more tests
 export class StartStopTimes {
+  private lastStartTime: LastStartTime;
   private readonly intervals: Interval[];
-  private lastStartTime?: DateTime;
 
-  constructor(intervals: Interval[] = [], lastStartTime?: DateTime) {
-    this.intervals = intervals;
+  constructor(
+    lastStartTime: LastStartTime = new LastStartTime(),
+    intervals: Interval[] = [],
+  ) {
     this.lastStartTime = lastStartTime;
+    this.intervals = intervals;
   }
 
   isStarted = (): boolean => {
-    return StartStopTimes.isTimeStarted(this.lastStartTime);
+    return this.lastStartTime.isStarted();
   };
-
-  // isStarted = (): this is { lastStartTime: DateTime } => {
-  //   return this.lastStartTime !== undefined;
-  // };
 
   // TODO Return an error if already started?
   start = (): void => {
@@ -29,26 +58,26 @@ export class StartStopTimes {
       return;
     }
 
-    this.lastStartTime = DateTime.utc();
+    this.lastStartTime = new LastStartTime(DateTime.utc());
   };
 
   // TODO Return an error if already stopped?
   stop = (): void => {
-    if (!StartStopTimes.isTimeStarted(this.lastStartTime)) {
+    if (!this.lastStartTime.isStarted()) {
       return;
     }
 
     this.intervals.push(
-      Interval.fromDateTimes(this.lastStartTime, DateTime.utc()),
+      Interval.fromDateTimes(this.lastStartTime.time, DateTime.utc()),
     );
-    this.lastStartTime = undefined;
+    this.lastStartTime = new LastStartTime();
   };
 
   getDurationAsIfStopped = (): Duration => {
     let intervalsAsIfStopped: Interval[];
-    if (StartStopTimes.isTimeStarted(this.lastStartTime)) {
+    if (this.lastStartTime.isStarted()) {
       intervalsAsIfStopped = this.intervals.concat(
-        Interval.fromDateTimes(this.lastStartTime, DateTime.utc()),
+        Interval.fromDateTimes(this.lastStartTime.time, DateTime.utc()),
       );
     } else {
       intervalsAsIfStopped = this.intervals;
@@ -64,19 +93,15 @@ export class StartStopTimes {
   };
 
   static fromDto = (dto: StartStopTimesDto): StartStopTimes => {
-    const lastStartTime = dto.lastStartTime
-      ? DateTime.fromISO(dto.lastStartTime)
-      : undefined;
-
     return new StartStopTimes(
+      LastStartTime.fromDto(dto.lastStartTime),
       dto.intervals.map((s) => Interval.fromISO(s)),
-      lastStartTime,
     );
   };
 
   toDto = (): StartStopTimesDto => {
     return {
-      lastStartTime: this.lastStartTime?.toISO() ?? undefined,
+      lastStartTime: this.lastStartTime.toDto(),
       intervals: this.intervals.map((i) => i.toISO()),
     };
   };

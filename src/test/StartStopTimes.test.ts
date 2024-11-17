@@ -1,11 +1,11 @@
 import * as assert from "assert";
 import { DateTime } from "luxon";
-import { StartStopTimes } from "../StartStopTimes";
+import { LastStartTime, StartStopTimes } from "../StartStopTimes";
 
 suite("StartStopTimes Test Suite", () => {
   test("isStarted() is true when there's a last start time", () => {
     assert.strictEqual(
-      new StartStopTimes([], DateTime.utc()).isStarted(),
+      new StartStopTimes(new LastStartTime(DateTime.utc())).isStarted(),
       true,
     );
   });
