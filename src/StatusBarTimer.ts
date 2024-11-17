@@ -65,6 +65,7 @@ export default class StatusBarTimer {
       "Display name and contributed configuration title should match",
     );
 
+    // FIXME If the shape of the loaded state is different than how it was stored, the commands won't be registered, meaning the debug command to clear the workspace storage won't work.
     this.loadState();
     this.registerCommands();
     this.registerEventHandlers();
