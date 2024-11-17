@@ -15,6 +15,10 @@ export class StartStopTimes {
     this.lastStartTime = lastStartTime;
   }
 
+  isStopped = (): boolean => {
+    return !this.lastStartTime;
+  };
+
   static fromDto = (dto: StartStopTimesDto): StartStopTimes => {
     const lastStartTime = dto.lastStartTime
       ? DateTime.fromISO(dto.lastStartTime)
