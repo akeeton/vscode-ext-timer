@@ -65,13 +65,16 @@
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "inspect-config": "pnpx @eslint/config-inspector@latest"
+    "inspect-config": "pnpx @eslint/config-inspector@latest",
+
+    "clean": "rimraf out/",
+    "prebuild": "pnpm run clean",
+    "compile-tests": "tsc -b --clean && tsc -b"
   },
   "devDependencies": {
     "@eslint/config-inspector": "^0.5.6",
@@ -88,6 +91,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "npm-run-all": "^4.1.5",
     "prettier": "3.3.3",
+    "rimraf": "^6.0.1",
     "type-fest": "^4.27.0",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.14.0"
