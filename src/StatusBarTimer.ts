@@ -26,6 +26,16 @@ export default class StatusBarTimer {
     private startStopTimes: StartStopTimes,
   ) {}
 
+  private loadWorkspaceState = (): void => {
+    this.startStopTimes = StartStopTimes.loadFromStorage(
+      this.context.workspaceState,
+    );
+  };
+
+  private saveWorkspaceState = (): void => {
+    this.startStopTimes.saveToStorage(this.context.workspaceState);
+  };
+
   activate = () => {
     assert(
       this.getPackageJson().contributes.configuration.title ===
@@ -33,7 +43,7 @@ export default class StatusBarTimer {
       "Display name and contributed configuration title should match",
     );
 
-    this.startStopTimes.loadFromStorage(this.context.workspaceState);
+    this.loadWorkspaceState();
 
     this.registerCommands();
     this.registerEventHandlers();
@@ -124,8 +134,8 @@ export default class StatusBarTimer {
 
     resetTimer: () => {
       // TODO Add confirmation quickpick
-      this.startStopTimes.reset();
-      this.startStopTimes.saveToStorage(this.context.workspaceState);
+      this.startStopTimes = new StartStopTimes();
+      this.saveWorkspaceState();
       this.updateStatusBarItem();
     },
 
@@ -166,7 +176,7 @@ export default class StatusBarTimer {
             this.context.workspaceState.update(key, undefined);
           }
 
-          this.startStopTimes.loadFromStorage(this.context.workspaceState);
+          this.loadWorkspaceState();
 
           vscode.window.showInformationMessage("Cleared workspace storage");
         });

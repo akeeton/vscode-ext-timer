@@ -7,45 +7,49 @@ interface StartStopTimesDto {
 }
 
 export default class StartStopTimes {
+  // TODO private? readonly?
+  intervals: Interval[];
   lastStartTime?: DateTime;
-  intervals: Interval[] = [];
 
+  constructor(intervals: Interval[] = [], lastStartTime?: DateTime) {
+    this.intervals = intervals;
+    this.lastStartTime = lastStartTime;
+  }
+
+  // TODO Move to StatusBarTimer
   private static storageKey = "startStopTimes";
 
-  reset = (): void => {
-    this.lastStartTime = undefined;
-    this.intervals = [];
+  static fromDto = (dto?: StartStopTimesDto): StartStopTimes => {
+    if (!dto) {
+      return new StartStopTimes();
+    }
+
+    const lastStartTime = dto.lastStartTime
+      ? DateTime.fromISO(dto.lastStartTime)
+      : undefined;
+
+    return new StartStopTimes(
+      dto.intervals.map((s) => Interval.fromISO(s)),
+      lastStartTime,
+    );
   };
 
-  saveToStorage = (memento: Memento): void => {
-    memento.update(StartStopTimes.storageKey, this.toDto());
-  };
-
-  /**
-   * Loads stored data in-place from the given memento.
-   * @param memento
-   */
-  loadFromStorage = (memento: Memento): void => {
-    this.fromDto(memento.get(StartStopTimes.storageKey));
-  };
-
-  private toDto = (): StartStopTimesDto => {
+  toDto = (): StartStopTimesDto => {
     return {
       lastStartTime: this.lastStartTime?.toISO() ?? undefined,
       intervals: this.intervals.map((i) => i.toISO()),
     };
   };
 
-  private fromDto = (dto?: StartStopTimesDto): void => {
-    if (!dto) {
-      this.reset();
-      return;
-    }
+  // TODO Handle in StatusBarTimer
+  saveToStorage = (memento: Memento): void => {
+    memento.update(StartStopTimes.storageKey, this.toDto());
+  };
 
-    this.lastStartTime = dto.lastStartTime
-      ? DateTime.fromISO(dto.lastStartTime)
-      : undefined;
-
-    this.intervals = dto.intervals.map((s) => Interval.fromISO(s));
+  // TODO Handle in StatusBarTimer
+  static loadFromStorage = (memento: Memento): StartStopTimes => {
+    return StartStopTimes.fromDto(
+      memento.get<StartStopTimesDto>(StartStopTimes.storageKey),
+    );
   };
 }
