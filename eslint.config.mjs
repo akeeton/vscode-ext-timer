@@ -9,7 +9,7 @@ import tseslint from "typescript-eslint";
 export default [
     eslint.configs.recommended,
     // ...tseslint.configs.recommendedTypeChecked,
-    ...tseslint.configs.recommendedTypeChecked,
+    ...tseslint.configs.strictTypeChecked,
     ...tseslint.configs.stylisticTypeChecked,
     {
         files: ["**/*.ts"],
