@@ -62,7 +62,7 @@ export class StartStopTimes {
   };
 
   toStarted = (): StartStopTimes => {
-    if (this.lastStartTime.isStarted()) {
+    if (this.isStarted()) {
       return this;
     }
 
@@ -73,7 +73,7 @@ export class StartStopTimes {
   };
 
   toStopped = (): StartStopTimes => {
-    if (!this.lastStartTime.isStarted()) {
+    if (!this.isStarted()) {
       return this;
     }
 
