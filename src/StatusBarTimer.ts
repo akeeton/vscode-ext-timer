@@ -41,7 +41,7 @@ export default class StatusBarTimer {
   private stateStorageKey: string;
 
   // TODO Move State fields back to this class and only create State during saving/loading?
-  private state = new State(new StartStopTimes());
+  private state = new State(StartStopTimes.stopped());
 
   private readonly statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
@@ -101,7 +101,7 @@ export default class StatusBarTimer {
     );
 
     if (!stateDto) {
-      this.state = new State(new StartStopTimes());
+      this.state = new State(StartStopTimes.stopped());
       return;
     }
 
@@ -153,7 +153,7 @@ export default class StatusBarTimer {
 
     resetTimer: () => {
       // TODO Add confirmation quickpick
-      this.state.startStopTimes = new StartStopTimes();
+      this.state.startStopTimes = StartStopTimes.stopped();
       this.saveState();
       this.updateStatusBarItem();
     },

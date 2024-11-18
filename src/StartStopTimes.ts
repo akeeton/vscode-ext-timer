@@ -4,7 +4,6 @@ interface LastStartTimeDto {
   time?: string;
 }
 
-// FIXME Make sure time parameter is UTC since toDto and fromDto assume UTC
 // TODO Is LastStartTime even necessary?
 // TODO Move methods into namespace so it's only plain data?
 export class LastStartTime {
@@ -45,22 +44,17 @@ export class StartStopTimes {
   readonly intervals: readonly Interval[];
 
   // TODO Remove default parameters when new StartStopTimes() instances are replaced with startedNow() and stopped()
-  constructor(
-    lastStartTime: LastStartTime = new LastStartTime(),
-    intervals: readonly Interval[] = [],
-  ) {
+  constructor(lastStartTime: LastStartTime, intervals: readonly Interval[]) {
     this.lastStartTime = lastStartTime;
     this.intervals = intervals;
   }
 
-  // TODO Use startedNow() instead of constructor where appropriate
   static startedNow = (): StartStopTimes => {
-    return new StartStopTimes(new LastStartTime(DateTime.utc()));
+    return new StartStopTimes(new LastStartTime(DateTime.utc()), []);
   };
 
-  // TODO Use stopped() instead of constructor where appropriate
   static stopped = (): StartStopTimes => {
-    return new StartStopTimes();
+    return new StartStopTimes(new LastStartTime(), []);
   };
 
   isStarted = (): this is { lastStartTime: { time: DateTime } } => {
