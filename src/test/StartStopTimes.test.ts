@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { DateTime, Duration, Interval } from "luxon";
-import { LastStartTime, StartStopTimes } from "../StartStopTimes";
+import { StartStopTimes } from "../StartStopTimes";
 
 suite("StartStopTimes Test Suite", () => {
   /**
@@ -44,7 +44,7 @@ suite("StartStopTimes Test Suite", () => {
 
     const epsilonMillis = 100;
     const diffMillis = Interval.fromDateTimes(
-      startedNow.lastStartTime.time,
+      startedNow.lastStartTime,
       DateTime.utc(),
     )
       .toDuration()
@@ -53,18 +53,8 @@ suite("StartStopTimes Test Suite", () => {
     assert.ok(Math.abs(diffMillis) < epsilonMillis);
   });
 
-  test("LastStartTime DTO round trip is the same as the original", () => {
-    const lastStartTime = new LastStartTime(DateTime.utc());
-    const roundTrip = LastStartTime.fromDto(lastStartTime.toDto());
-
-    deepStrictValuesEqual(roundTrip, lastStartTime);
-  });
-
   test("StartStopTimes DTO round trip is the same as the original", () => {
-    const startStopTimes = new StartStopTimes(
-      new LastStartTime(DateTime.utc()),
-      testIntervals,
-    );
+    const startStopTimes = StartStopTimes.startedNow(testIntervals);
     const roundTrip = StartStopTimes.fromDto(startStopTimes.toDto());
 
     deepStrictValuesEqual(roundTrip, startStopTimes);

@@ -1,64 +1,31 @@
 import { DateTime, Duration, Interval } from "luxon";
 
-interface LastStartTimeDto {
-  time?: string;
-}
-
-// TODO Is LastStartTime even necessary?
-// TODO Move methods into namespace so it's only plain data?
-export class LastStartTime {
-  readonly time?: DateTime;
-
-  constructor(time?: DateTime) {
-    this.time = time?.setZone("UTC");
-  }
-
-  // TODO Is this necessary anymore since adding the type guard return to StartStopTimes.isStarted()?
-  isStarted = (): this is { time: LastStartTime } => {
-    return this.time !== undefined;
-  };
-
-  static fromDto = (dto: LastStartTimeDto): LastStartTime => {
-    if (!dto.time) {
-      return new LastStartTime();
-    }
-
-    return new LastStartTime(DateTime.fromISO(dto.time).setZone("UTC"));
-  };
-
-  toDto = (): LastStartTimeDto => {
-    return {
-      time: this.time?.setZone("UTC").toISO() ?? undefined,
-    };
-  };
-}
-
 export interface StartStopTimesDto {
-  lastStartTime: LastStartTimeDto;
+  lastStartTime?: string;
   intervals: string[];
 }
 
 // TODO Move methods into namespace so it's only plain data?
 export class StartStopTimes {
-  readonly lastStartTime: LastStartTime;
+  readonly lastStartTime?: DateTime;
   readonly intervals: readonly Interval[];
 
-  // TODO Remove default parameters when new StartStopTimes() instances are replaced with startedNow() and stopped()
-  constructor(lastStartTime: LastStartTime, intervals: readonly Interval[]) {
-    this.lastStartTime = lastStartTime;
+  // TODO Wrap constructor params in an object? Then get rid of the class entirely and just have functions that operate on the object itself?
+  constructor(lastStartTime?: DateTime, intervals: readonly Interval[] = []) {
+    this.lastStartTime = lastStartTime?.setZone("UTC");
     this.intervals = intervals;
   }
 
-  static startedNow = (): StartStopTimes => {
-    return new StartStopTimes(new LastStartTime(DateTime.utc()), []);
+  static startedNow = (intervals: readonly Interval[] = []): StartStopTimes => {
+    return new StartStopTimes(DateTime.utc(), intervals);
   };
 
-  static stopped = (): StartStopTimes => {
-    return new StartStopTimes(new LastStartTime(), []);
+  static stopped = (intervals: readonly Interval[] = []): StartStopTimes => {
+    return new StartStopTimes(undefined, intervals);
   };
 
   isStarted = (): this is { lastStartTime: { time: DateTime } } => {
-    return this.lastStartTime.isStarted();
+    return this.lastStartTime !== undefined;
   };
 
   toStarted = (): StartStopTimes => {
@@ -66,10 +33,7 @@ export class StartStopTimes {
       return this;
     }
 
-    return new StartStopTimes(
-      new LastStartTime(DateTime.utc()),
-      this.intervals,
-    );
+    return StartStopTimes.startedNow(this.intervals);
   };
 
   toStopped = (): StartStopTimes => {
@@ -77,36 +41,37 @@ export class StartStopTimes {
       return this;
     }
 
-    return new StartStopTimes(
-      new LastStartTime(),
+    return StartStopTimes.stopped(
       this.intervals.concat(
-        Interval.fromDateTimes(this.lastStartTime.time, DateTime.utc()),
+        Interval.fromDateTimes(this.lastStartTime, DateTime.utc()),
       ),
     );
   };
 
   getDuration = (): Duration => {
-    const emptyDuration = Duration.fromObject({});
-
     return this.intervals
       .map((interval) => {
         return interval.toDuration();
       })
       .reduce((durationAcc, duration) => {
         return durationAcc.plus(duration);
-      }, emptyDuration);
+      }, Duration.fromObject({}));
   };
 
   static fromDto = (dto: StartStopTimesDto): StartStopTimes => {
+    const lastStartTime = dto.lastStartTime
+      ? DateTime.fromISO(dto.lastStartTime).setZone("UTC")
+      : undefined;
+
     return new StartStopTimes(
-      LastStartTime.fromDto(dto.lastStartTime),
+      lastStartTime,
       dto.intervals.map((s) => Interval.fromISO(s)),
     );
   };
 
   toDto = (): StartStopTimesDto => {
     return {
-      lastStartTime: this.lastStartTime.toDto(),
+      lastStartTime: this.lastStartTime?.setZone("UTC").toISO() ?? undefined,
       intervals: this.intervals.map((i) => i.toISO()),
     };
   };
