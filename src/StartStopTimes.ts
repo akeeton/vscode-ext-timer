@@ -4,13 +4,17 @@ interface LastStartTimeDto {
   time?: string;
 }
 
+// FIXME Make sure time parameter is UTC since toDto and fromDto assume UTC
+// TODO Is LastStartTime even necessary?
+// TODO Move methods into namespace so it's only plain data?
 export class LastStartTime {
-  time?: DateTime;
+  readonly time?: DateTime;
 
   constructor(time?: DateTime) {
     this.time = time;
   }
 
+  // TODO Is this necessary anymore since adding the type guard return to StartStopTimes.isStarted()?
   isStarted = (): this is { time: LastStartTime } => {
     return this.time !== undefined;
   };
@@ -20,12 +24,12 @@ export class LastStartTime {
       return new LastStartTime();
     }
 
-    return new LastStartTime(DateTime.fromISO(dto.time));
+    return new LastStartTime(DateTime.fromISO(dto.time).setZone("UTC"));
   };
 
   toDto = (): LastStartTimeDto => {
     return {
-      time: this.time?.toISO() ?? undefined,
+      time: this.time?.setZone("UTC").toISO() ?? undefined,
     };
   };
 }
@@ -35,61 +39,68 @@ export interface StartStopTimesDto {
   intervals: string[];
 }
 
-// TODO Write more tests
+// TODO Move methods into namespace so it's only plain data?
 export class StartStopTimes {
-  private lastStartTime: LastStartTime;
-  private readonly intervals: Interval[];
+  readonly lastStartTime: LastStartTime;
+  readonly intervals: readonly Interval[];
 
+  // TODO Remove default parameters when new StartStopTimes() instances are replaced with startedNow() and stopped()
   constructor(
     lastStartTime: LastStartTime = new LastStartTime(),
-    intervals: Interval[] = [],
+    intervals: readonly Interval[] = [],
   ) {
     this.lastStartTime = lastStartTime;
     this.intervals = intervals;
   }
 
-  isStarted = (): boolean => {
+  // TODO Use startedNow() instead of constructor where appropriate
+  static startedNow = (): StartStopTimes => {
+    return new StartStopTimes(new LastStartTime(DateTime.utc()));
+  };
+
+  // TODO Use stopped() instead of constructor where appropriate
+  static stopped = (): StartStopTimes => {
+    return new StartStopTimes();
+  };
+
+  isStarted = (): this is { lastStartTime: { time: DateTime } } => {
     return this.lastStartTime.isStarted();
   };
 
-  // TODO Return an error if already started?
-  start = (): void => {
-    if (this.isStarted()) {
-      return;
-    }
-
-    this.lastStartTime = new LastStartTime(DateTime.utc());
-  };
-
-  // TODO Return an error if already stopped?
-  stop = (): void => {
-    if (!this.lastStartTime.isStarted()) {
-      return;
-    }
-
-    this.intervals.push(
-      Interval.fromDateTimes(this.lastStartTime.time, DateTime.utc()),
-    );
-    this.lastStartTime = new LastStartTime();
-  };
-
-  getDurationAsIfStopped = (): Duration => {
-    let intervalsAsIfStopped: Interval[];
+  toStarted = (): StartStopTimes => {
     if (this.lastStartTime.isStarted()) {
-      intervalsAsIfStopped = this.intervals.concat(
-        Interval.fromDateTimes(this.lastStartTime.time, DateTime.utc()),
-      );
-    } else {
-      intervalsAsIfStopped = this.intervals;
+      return this;
     }
 
-    return intervalsAsIfStopped
+    return new StartStopTimes(
+      new LastStartTime(DateTime.utc()),
+      this.intervals,
+    );
+  };
+
+  toStopped = (): StartStopTimes => {
+    if (!this.lastStartTime.isStarted()) {
+      return this;
+    }
+
+    return new StartStopTimes(
+      new LastStartTime(),
+      this.intervals.concat(
+        Interval.fromDateTimes(this.lastStartTime.time, DateTime.utc()),
+      ),
+    );
+  };
+
+  getDuration = (): Duration => {
+    const emptyDuration = Duration.fromObject({});
+
+    return this.intervals
       .map((interval) => {
         return interval.toDuration();
       })
       .reduce((durationAcc, duration) => {
         return durationAcc.plus(duration);
-      }, Duration.fromObject({}));
+      }, emptyDuration);
   };
 
   static fromDto = (dto: StartStopTimesDto): StartStopTimes => {
@@ -104,11 +115,5 @@ export class StartStopTimes {
       lastStartTime: this.lastStartTime.toDto(),
       intervals: this.intervals.map((i) => i.toISO()),
     };
-  };
-
-  private static isTimeStarted = (
-    lastStartTime?: DateTime,
-  ): lastStartTime is DateTime => {
-    return lastStartTime !== undefined;
   };
 }

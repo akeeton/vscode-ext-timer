@@ -1,16 +1,116 @@
 import * as assert from "assert";
-import { DateTime } from "luxon";
+import { DateTime, Duration, Interval } from "luxon";
 import { LastStartTime, StartStopTimes } from "../StartStopTimes";
 
 suite("StartStopTimes Test Suite", () => {
-  test("isStarted() is true when there's a last start time", () => {
-    assert.strictEqual(
-      new StartStopTimes(new LastStartTime(DateTime.utc())).isStarted(),
-      true,
-    );
+  /**
+   * Wraps {@link assert.deepStrictEqual} so that it doesn't throw when everything is equal except the references.
+   */
+  function deepStrictValuesEqual<T>(
+    actual: unknown,
+    expected: T,
+    message?: string | Error,
+  ): asserts actual is T {
+    try {
+      assert.deepStrictEqual(actual, expected, message);
+    } catch (err: unknown) {
+      if (!(err instanceof assert.AssertionError)) {
+        throw err;
+      }
+
+      const referencesNotEqualErrorMessage =
+        "Values have same structure but are not reference-equal";
+
+      if (!err.message.includes(referencesNotEqualErrorMessage)) {
+        throw err;
+      }
+    }
+  }
+
+  const testDateTime = DateTime.fromObject({ year: 1970, month: 1, day: 1 });
+  const testDuration = Duration.fromObject({ hours: 4, minutes: 20 });
+  const testIntervals = [
+    Interval.after(testDateTime, testDuration),
+    Interval.after(
+      testDateTime.plus(testDuration).plus(testDuration),
+      testDuration,
+    ),
+  ];
+
+  test("startedNow() returns an object where isStarted() is true and lastStartTime is near DateTime.utc()", () => {
+    const startedNow = StartStopTimes.startedNow();
+
+    assert.ok(startedNow.isStarted());
+
+    const epsilonMillis = 100;
+    const diffMillis = Interval.fromDateTimes(
+      startedNow.lastStartTime.time,
+      DateTime.utc(),
+    )
+      .toDuration()
+      .toMillis();
+
+    assert.ok(Math.abs(diffMillis) < epsilonMillis);
   });
 
-  test("isStarted() is false when there's no last start time", () => {
-    assert.strictEqual(new StartStopTimes().isStarted(), false);
+  test("LastStartTime DTO round trip is the same as the original", () => {
+    const lastStartTime = new LastStartTime(DateTime.utc());
+    const roundTrip = LastStartTime.fromDto(lastStartTime.toDto());
+
+    deepStrictValuesEqual(roundTrip, lastStartTime);
+  });
+
+  test("StartStopTimes DTO round trip is the same as the original", () => {
+    const startStopTimes = new StartStopTimes(
+      new LastStartTime(DateTime.utc()),
+      testIntervals,
+    );
+    const roundTrip = StartStopTimes.fromDto(startStopTimes.toDto());
+
+    deepStrictValuesEqual(roundTrip, startStopTimes);
+  });
+
+  test("startedNow() returns an object where isStarted() is true", () => {
+    assert.ok(StartStopTimes.startedNow().isStarted());
+  });
+
+  test("stopped() returns an object where isStarted() is false", () => {
+    assert.ok(!StartStopTimes.stopped().isStarted());
+  });
+
+  test("toStarted() returns the same object when isStarted() is true", () => {
+    const started = StartStopTimes.startedNow();
+    const startedAgain = started.toStarted();
+
+    assert.ok(started.isStarted());
+    assert.ok(startedAgain.isStarted());
+    assert.strictEqual(startedAgain, started);
+  });
+
+  test("toStarted() returns a new object when isStarted() is false", () => {
+    const stopped = StartStopTimes.stopped();
+    const started = stopped.toStarted();
+
+    assert.ok(!stopped.isStarted());
+    assert.ok(started.isStarted());
+    assert.notStrictEqual(started, stopped);
+  });
+
+  test("toStopped() returns the same object when isStarted() is false", () => {
+    const stopped = StartStopTimes.stopped();
+    const stoppedAgain = stopped.toStopped();
+
+    assert.ok(!stopped.isStarted());
+    assert.ok(!stoppedAgain.isStarted());
+    assert.strictEqual(stoppedAgain, stopped);
+  });
+
+  test("toStopped() returns a new object when isStarted() is true", () => {
+    const started = StartStopTimes.startedNow();
+    const stopped = started.toStopped();
+
+    assert.ok(started.isStarted());
+    assert.ok(!stopped.isStarted());
+    assert.notStrictEqual(stopped, started);
   });
 });

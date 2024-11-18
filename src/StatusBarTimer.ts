@@ -116,8 +116,9 @@ export default class StatusBarTimer {
   };
 
   private updateStatusBarItem = () => {
-    const durationAsIfStopped =
-      this.state.startStopTimes.getDurationAsIfStopped();
+    const durationAsIfStopped = this.state.startStopTimes
+      .toStopped()
+      .getDuration();
 
     // TODO Cache durationFormat config setting?
     const format = this.getConfig().durationFormat as string;
@@ -135,7 +136,7 @@ export default class StatusBarTimer {
         return;
       }
 
-      this.state.startStopTimes.start();
+      this.state.startStopTimes = this.state.startStopTimes.toStarted();
       this.saveState();
       this.updateStatusBarItem();
     },
@@ -145,7 +146,7 @@ export default class StatusBarTimer {
         return;
       }
 
-      this.state.startStopTimes.stop();
+      this.state.startStopTimes = this.state.startStopTimes.toStopped();
       this.saveState();
       this.updateStatusBarItem();
     },
