@@ -5,7 +5,6 @@ export interface StartStopTimesDto {
   intervals: string[];
 }
 
-// TODO Move methods into namespace so it's only plain data?
 export class StartStopTimes {
   readonly lastStartTime?: DateTime;
   readonly intervals: readonly Interval[];

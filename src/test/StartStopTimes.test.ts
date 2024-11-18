@@ -1,32 +1,9 @@
 import * as assert from "assert";
 import { DateTime, Duration, Interval } from "luxon";
 import { StartStopTimes } from "../StartStopTimes";
+import { deepStrictValuesEqual } from "./assert";
 
 suite("StartStopTimes Test Suite", () => {
-  /**
-   * Wraps {@link assert.deepStrictEqual} so that it doesn't throw when everything is equal except the references.
-   */
-  function deepStrictValuesEqual<T>(
-    actual: unknown,
-    expected: T,
-    message?: string | Error,
-  ): asserts actual is T {
-    try {
-      assert.deepStrictEqual(actual, expected, message);
-    } catch (err: unknown) {
-      if (!(err instanceof assert.AssertionError)) {
-        throw err;
-      }
-
-      const referencesNotEqualErrorMessage =
-        "Values have same structure but are not reference-equal";
-
-      if (!err.message.includes(referencesNotEqualErrorMessage)) {
-        throw err;
-      }
-    }
-  }
-
   const testDateTime = DateTime.fromObject({ year: 1970, month: 1, day: 1 });
   const testDuration = Duration.fromObject({ hours: 4, minutes: 20 });
   const testIntervals = [
