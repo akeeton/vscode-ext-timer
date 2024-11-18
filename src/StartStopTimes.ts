@@ -11,7 +11,7 @@ export class LastStartTime {
   readonly time?: DateTime;
 
   constructor(time?: DateTime) {
-    this.time = time;
+    this.time = time?.setZone("UTC");
   }
 
   // TODO Is this necessary anymore since adding the type guard return to StartStopTimes.isStarted()?
