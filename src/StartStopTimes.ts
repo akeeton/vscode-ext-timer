@@ -9,18 +9,27 @@ export class StartStopTimes {
   readonly lastStartTime?: DateTime;
   readonly intervals: readonly Interval[];
 
-  // TODO Wrap constructor params in an object? Then get rid of the class entirely and just have functions that operate on the object itself?
-  constructor(lastStartTime?: DateTime, intervals: readonly Interval[] = []) {
+  // TODO Get rid of the class entirely and just have functions that operate on the data itself?
+  constructor({
+    lastStartTime,
+    intervals = [],
+  }: {
+    lastStartTime?: DateTime;
+    intervals: readonly Interval[];
+  }) {
     this.lastStartTime = lastStartTime?.setZone("UTC");
     this.intervals = intervals;
   }
 
   static startedNow = (intervals: readonly Interval[] = []): StartStopTimes => {
-    return new StartStopTimes(DateTime.utc(), intervals);
+    return new StartStopTimes({
+      lastStartTime: DateTime.utc(),
+      intervals: intervals,
+    });
   };
 
   static stopped = (intervals: readonly Interval[] = []): StartStopTimes => {
-    return new StartStopTimes(undefined, intervals);
+    return new StartStopTimes({ intervals: intervals });
   };
 
   isStarted = (): this is { lastStartTime: { time: DateTime } } => {
@@ -62,10 +71,10 @@ export class StartStopTimes {
       ? DateTime.fromISO(dto.lastStartTime).setZone("UTC")
       : undefined;
 
-    return new StartStopTimes(
-      lastStartTime,
-      dto.intervals.map((s) => Interval.fromISO(s)),
-    );
+    return new StartStopTimes({
+      lastStartTime: lastStartTime,
+      intervals: dto.intervals.map((s) => Interval.fromISO(s)),
+    });
   };
 
   toDto = (): StartStopTimesDto => {
