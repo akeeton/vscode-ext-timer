@@ -23,7 +23,7 @@ export class StartStopTimes {
     return new StartStopTimes(undefined, intervals);
   };
 
-  isStarted = (): this is { lastStartTime: { time: DateTime } } => {
+  isStarted = (): this is { lastStartTime: DateTime } => {
     return this.lastStartTime !== undefined;
   };
 
