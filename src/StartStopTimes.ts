@@ -1,86 +1,77 @@
 import { DateTime, Duration, Interval } from "luxon";
 
-export interface StartStopTimesDto {
+export interface Dto {
   lastStartTime?: string;
   intervals: string[];
 }
-
-export class StartStopTimes {
+export interface Model {
   readonly lastStartTime?: DateTime;
   readonly intervals: readonly Interval[];
+}
 
-  // TODO Get rid of the class entirely and just have functions that operate on the data itself?
-  constructor({
-    lastStartTime,
-    intervals = [],
-  }: {
-    lastStartTime?: DateTime;
-    intervals: readonly Interval[];
-  }) {
-    this.lastStartTime = lastStartTime?.setZone("UTC");
-    this.intervals = intervals;
+export function startedNow(intervals: readonly Interval[] = []): Model {
+  return {
+    lastStartTime: DateTime.utc(),
+    intervals: intervals,
+  };
+}
+
+export function stopped(intervals: readonly Interval[] = []): Model {
+  return { intervals: intervals };
+}
+
+export function isStarted(startStopTimes: Model): startStopTimes is {
+  readonly lastStartTime: DateTime;
+  readonly intervals: readonly Interval[];
+} {
+  return startStopTimes.lastStartTime !== undefined;
+}
+
+export function toStarted(startStopTimes: Model): Model {
+  if (isStarted(startStopTimes)) {
+    return startStopTimes;
   }
 
-  static startedNow = (intervals: readonly Interval[] = []): StartStopTimes => {
-    return new StartStopTimes({
-      lastStartTime: DateTime.utc(),
-      intervals: intervals,
-    });
+  return startedNow(startStopTimes.intervals);
+}
+
+export function toStopped(startStopTimes: Model): Model {
+  if (!isStarted(startStopTimes)) {
+    return startStopTimes;
+  }
+
+  return stopped(
+    startStopTimes.intervals.concat(
+      Interval.fromDateTimes(startStopTimes.lastStartTime, DateTime.utc()),
+    ),
+  );
+}
+
+export function getDuration(startStopTimes: Model): Duration {
+  return startStopTimes.intervals
+    .map((interval) => {
+      return interval.toDuration();
+    })
+    .reduce((durationAcc, duration) => {
+      return durationAcc.plus(duration);
+    }, Duration.fromObject({}));
+}
+
+export function fromDto(dto: Dto): Model {
+  const lastStartTime = dto.lastStartTime
+    ? DateTime.fromISO(dto.lastStartTime).setZone("UTC")
+    : undefined;
+
+  return {
+    lastStartTime: lastStartTime,
+    intervals: dto.intervals.map((s) => Interval.fromISO(s)),
   };
+}
 
-  static stopped = (intervals: readonly Interval[] = []): StartStopTimes => {
-    return new StartStopTimes({ intervals: intervals });
-  };
-
-  isStarted = (): this is { lastStartTime: DateTime } => {
-    return this.lastStartTime !== undefined;
-  };
-
-  toStarted = (): StartStopTimes => {
-    if (this.isStarted()) {
-      return this;
-    }
-
-    return StartStopTimes.startedNow(this.intervals);
-  };
-
-  toStopped = (): StartStopTimes => {
-    if (!this.isStarted()) {
-      return this;
-    }
-
-    return StartStopTimes.stopped(
-      this.intervals.concat(
-        Interval.fromDateTimes(this.lastStartTime, DateTime.utc()),
-      ),
-    );
-  };
-
-  getDuration = (): Duration => {
-    return this.intervals
-      .map((interval) => {
-        return interval.toDuration();
-      })
-      .reduce((durationAcc, duration) => {
-        return durationAcc.plus(duration);
-      }, Duration.fromObject({}));
-  };
-
-  static fromDto = (dto: StartStopTimesDto): StartStopTimes => {
-    const lastStartTime = dto.lastStartTime
-      ? DateTime.fromISO(dto.lastStartTime).setZone("UTC")
-      : undefined;
-
-    return new StartStopTimes({
-      lastStartTime: lastStartTime,
-      intervals: dto.intervals.map((s) => Interval.fromISO(s)),
-    });
-  };
-
-  toDto = (): StartStopTimesDto => {
-    return {
-      lastStartTime: this.lastStartTime?.setZone("UTC").toISO() ?? undefined,
-      intervals: this.intervals.map((i) => i.toISO()),
-    };
+export function toDto(startStopTimes: Model): Dto {
+  return {
+    lastStartTime:
+      startStopTimes.lastStartTime?.setZone("UTC").toISO() ?? undefined,
+    intervals: startStopTimes.intervals.map((i) => i.toISO()),
   };
 }

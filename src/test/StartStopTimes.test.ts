@@ -1,7 +1,8 @@
 import * as assert from "assert";
 import { DateTime, Duration, Interval } from "luxon";
-import { StartStopTimes } from "../StartStopTimes";
-import { deepStrictValuesEqual } from "./assert";
+import * as R from "remeda";
+import * as StartStopTimes from "../StartStopTimes";
+import { assertDeepStrictValuesEqual, assertFalse, assertTrue } from "./assert";
 
 suite("StartStopTimes Test Suite", () => {
   const testDateTime = DateTime.fromObject({ year: 1970, month: 1, day: 1 });
@@ -17,7 +18,7 @@ suite("StartStopTimes Test Suite", () => {
   test("startedNow() returns an object where isStarted() is true and lastStartTime is near DateTime.utc()", () => {
     const startedNow = StartStopTimes.startedNow();
 
-    assert.ok(startedNow.isStarted());
+    assertTrue(StartStopTimes.isStarted(startedNow));
 
     const epsilonMillis = 100;
     const diffMillis = Interval.fromDateTimes(
@@ -27,57 +28,61 @@ suite("StartStopTimes Test Suite", () => {
       .toDuration()
       .toMillis();
 
-    assert.ok(Math.abs(diffMillis) < epsilonMillis);
+    assertTrue(Math.abs(diffMillis) < epsilonMillis);
   });
 
   test("StartStopTimes DTO round trip is the same as the original", () => {
     const startStopTimes = StartStopTimes.startedNow(testIntervals);
-    const roundTrip = StartStopTimes.fromDto(startStopTimes.toDto());
+    const roundTrip = R.pipe(
+      startStopTimes,
+      StartStopTimes.toDto,
+      StartStopTimes.fromDto,
+    );
 
-    deepStrictValuesEqual(roundTrip, startStopTimes);
+    assertDeepStrictValuesEqual(roundTrip, startStopTimes);
   });
 
   test("startedNow() returns an object where isStarted() is true", () => {
-    assert.ok(StartStopTimes.startedNow().isStarted());
+    assertTrue(R.pipe(StartStopTimes.startedNow(), StartStopTimes.isStarted));
   });
 
   test("stopped() returns an object where isStarted() is false", () => {
-    assert.ok(!StartStopTimes.stopped().isStarted());
+    assertFalse(R.pipe(StartStopTimes.stopped(), StartStopTimes.isStarted));
   });
 
   test("toStarted() returns the same object when isStarted() is true", () => {
     const started = StartStopTimes.startedNow();
-    const startedAgain = started.toStarted();
+    const startedAgain = StartStopTimes.toStarted(started);
 
-    assert.ok(started.isStarted());
-    assert.ok(startedAgain.isStarted());
+    assertTrue(StartStopTimes.isStarted(started));
+    assertTrue(StartStopTimes.isStarted(startedAgain));
     assert.strictEqual(startedAgain, started);
   });
 
   test("toStarted() returns a new object when isStarted() is false", () => {
     const stopped = StartStopTimes.stopped();
-    const started = stopped.toStarted();
+    const started = StartStopTimes.toStarted(stopped);
 
-    assert.ok(!stopped.isStarted());
-    assert.ok(started.isStarted());
+    assertFalse(StartStopTimes.isStarted(stopped));
+    assertTrue(StartStopTimes.isStarted(started));
     assert.notStrictEqual(started, stopped);
   });
 
   test("toStopped() returns the same object when isStarted() is false", () => {
     const stopped = StartStopTimes.stopped();
-    const stoppedAgain = stopped.toStopped();
+    const stoppedAgain = StartStopTimes.toStopped(stopped);
 
-    assert.ok(!stopped.isStarted());
-    assert.ok(!stoppedAgain.isStarted());
+    assertFalse(StartStopTimes.isStarted(stopped));
+    assertFalse(StartStopTimes.isStarted(stoppedAgain));
     assert.strictEqual(stoppedAgain, stopped);
   });
 
   test("toStopped() returns a new object when isStarted() is true", () => {
     const started = StartStopTimes.startedNow();
-    const stopped = started.toStopped();
+    const stopped = StartStopTimes.toStopped(started);
 
-    assert.ok(started.isStarted());
-    assert.ok(!stopped.isStarted());
+    assertTrue(StartStopTimes.isStarted(started));
+    assertFalse(StartStopTimes.isStarted(stopped));
     assert.notStrictEqual(stopped, started);
   });
 });

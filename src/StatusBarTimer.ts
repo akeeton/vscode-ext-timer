@@ -1,7 +1,8 @@
 import assert from "assert";
+import * as R from "remeda";
 import { PackageJson } from "type-fest";
 import * as vscode from "vscode";
-import { StartStopTimes, StartStopTimesDto } from "./StartStopTimes";
+import * as StartStopTimes from "./StartStopTimes";
 
 type VSCodePackageJson = PackageJson & {
   name: string;
@@ -14,13 +15,13 @@ type VSCodePackageJson = PackageJson & {
 };
 
 interface StateDto {
-  startStopTimes: StartStopTimesDto;
+  startStopTimes: StartStopTimes.Dto;
 }
 
 class State {
-  startStopTimes: StartStopTimes;
+  startStopTimes: StartStopTimes.Model;
 
-  constructor(startStopTimes: StartStopTimes) {
+  constructor(startStopTimes: StartStopTimes.Model) {
     this.startStopTimes = startStopTimes;
   }
 
@@ -30,11 +31,12 @@ class State {
 
   toDto = (): StateDto => {
     return {
-      startStopTimes: this.startStopTimes.toDto(),
+      startStopTimes: StartStopTimes.toDto(this.startStopTimes),
     };
   };
 }
 
+// TODO Make more functional and move "IO" to the edges
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
 export default class StatusBarTimer {
   private context: vscode.ExtensionContext;
@@ -116,14 +118,16 @@ export default class StatusBarTimer {
   };
 
   private updateStatusBarItem = () => {
-    const durationAsIfStopped = this.state.startStopTimes
-      .toStopped()
-      .getDuration();
+    const durationAsIfStopped = R.pipe(
+      this.state.startStopTimes,
+      StartStopTimes.toStopped,
+      StartStopTimes.getDuration,
+    );
 
     // TODO Cache durationFormat config setting?
     const format = this.getConfig().durationFormat as string;
 
-    const icon = this.state.startStopTimes.isStarted()
+    const icon = StartStopTimes.isStarted(this.state.startStopTimes)
       ? StatusBarTimer.icons.started
       : StatusBarTimer.icons.stopped;
 
@@ -132,21 +136,25 @@ export default class StatusBarTimer {
 
   private readonly commands = {
     startTimer: () => {
-      if (this.state.startStopTimes.isStarted()) {
+      if (StartStopTimes.isStarted(this.state.startStopTimes)) {
         return;
       }
 
-      this.state.startStopTimes = this.state.startStopTimes.toStarted();
+      this.state.startStopTimes = StartStopTimes.toStarted(
+        this.state.startStopTimes,
+      );
       this.saveState();
       this.updateStatusBarItem();
     },
 
     stopTimer: () => {
-      if (!this.state.startStopTimes.isStarted()) {
+      if (!StartStopTimes.isStarted(this.state.startStopTimes)) {
         return;
       }
 
-      this.state.startStopTimes = this.state.startStopTimes.toStopped();
+      this.state.startStopTimes = StartStopTimes.toStopped(
+        this.state.startStopTimes,
+      );
       this.saveState();
       this.updateStatusBarItem();
     },
@@ -159,7 +167,7 @@ export default class StatusBarTimer {
     },
 
     clickStatusBarItem: () => {
-      if (this.state.startStopTimes.isStarted()) {
+      if (StartStopTimes.isStarted(this.state.startStopTimes)) {
         this.commands.stopTimer();
       } else {
         this.commands.startTimer();
