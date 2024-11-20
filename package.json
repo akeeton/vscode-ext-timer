@@ -71,7 +71,6 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "inspect-config": "pnpx @eslint/config-inspector@latest",
-
     "clean": "rimraf out/",
     "prebuild": "pnpm run clean",
     "compile-tests": "tsc -b --clean && tsc -b"
@@ -97,6 +96,7 @@
     "typescript-eslint": "^8.14.0"
   },
   "dependencies": {
-    "luxon": "^3.5.0"
+    "luxon": "^3.5.0",
+    "remeda": "^2.17.3"
   }
 }

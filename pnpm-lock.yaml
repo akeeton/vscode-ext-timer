@@ -11,6 +11,9 @@ importers:
       luxon:
         specifier: ^3.5.0
         version: 3.5.0
+      remeda:
+        specifier: ^2.17.3
+        version: 2.17.3
     devDependencies:
       '@eslint/config-inspector':
         specifier: ^0.5.6
@@ -1477,6 +1480,9 @@ packages:
   regexp.prototype.flags@1.5.3:
     resolution: {integrity: sha512-vqlC04+RQoFalODCbCumG2xIOvapzVMHwsyIGM/SIE8fRhFFsXeH8/QQ+s0T0kDAhKc4k30s73/0ydkHQz6HlQ==}
     engines: {node: '>= 0.4'}
+
+  remeda@2.17.3:
+    resolution: {integrity: sha512-xyi2rCQkz2j4BEWbWxPw6JCapv1yBuSwr4Uf9BX00AkesAJaiKvc6Il6thsBidwVZAtNiSaCIXvslkKL0ybz8w==}
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -3336,6 +3342,10 @@ snapshots:
       define-properties: 1.2.1
       es-errors: 1.3.0
       set-function-name: 2.0.2
+
+  remeda@2.17.3:
+    dependencies:
+      type-fest: 4.27.0
 
   require-directory@2.1.1: {}
 
