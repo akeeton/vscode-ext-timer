@@ -4,7 +4,7 @@ import { PackageJson } from "type-fest";
 import * as vscode from "vscode";
 import * as StartStopTimes from "./start-stop-times";
 
-type VSCodePackageJson = PackageJson & {
+type VsCodePackageJson = PackageJson & {
   name: string;
   displayName: string;
   contributes: {
@@ -14,37 +14,17 @@ type VSCodePackageJson = PackageJson & {
   };
 };
 
-interface StateDto {
+interface WorkspaceStateDto {
   startStopTimes: StartStopTimes.Dto;
-}
-
-class State {
-  startStopTimes: StartStopTimes.Model;
-
-  constructor(startStopTimes: StartStopTimes.Model) {
-    this.startStopTimes = startStopTimes;
-  }
-
-  static fromDto = (dto: StateDto): State => {
-    return new State(StartStopTimes.fromDto(dto.startStopTimes));
-  };
-
-  toDto = (): StateDto => {
-    return {
-      startStopTimes: StartStopTimes.toDto(this.startStopTimes),
-    };
-  };
 }
 
 // TODO Make more functional and move "IO" to the edges
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
 export class StatusBarTimer {
   private context: vscode.ExtensionContext;
-  private stateStorageKey: string;
+  private storageKey: string;
 
-  // TODO Move State fields back to this class and only create State during saving/loading?
-  private state = new State(StartStopTimes.stopped());
-
+  private startStopTimes = StartStopTimes.stopped();
   private readonly statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
   );
@@ -55,9 +35,9 @@ export class StatusBarTimer {
     stopped: "stop-circle",
   };
 
-  constructor(context: vscode.ExtensionContext, stateStorageKey: string) {
+  constructor(context: vscode.ExtensionContext, storageKey: string) {
     this.context = context;
-    this.stateStorageKey = stateStorageKey;
+    this.storageKey = storageKey;
   }
 
   activate = () => {
@@ -85,8 +65,8 @@ export class StatusBarTimer {
     console.log(`Extension ${this.context.extension.id} activated`);
   };
 
-  private getPackageJson = (): VSCodePackageJson => {
-    return this.context.extension.packageJSON as VSCodePackageJson;
+  private getPackageJson = (): VsCodePackageJson => {
+    return this.context.extension.packageJSON as VsCodePackageJson;
   };
 
   private getConfigSection = () => {
@@ -98,28 +78,29 @@ export class StatusBarTimer {
   };
 
   private loadState = (): void => {
-    const stateDto = this.context.workspaceState.get<StateDto>(
-      this.stateStorageKey,
-    );
+    const workspaceStateDto =
+      this.context.workspaceState.get<WorkspaceStateDto>(this.storageKey);
 
-    if (!stateDto) {
-      this.state = new State(StartStopTimes.stopped());
+    if (!workspaceStateDto) {
+      this.startStopTimes = StartStopTimes.stopped();
       return;
     }
 
-    this.state = State.fromDto(stateDto);
+    this.startStopTimes = StartStopTimes.fromDto(
+      workspaceStateDto.startStopTimes,
+    );
   };
 
   private saveState = (): void => {
     this.context.workspaceState.update(
-      this.stateStorageKey,
-      this.state.toDto(),
+      this.storageKey,
+      StartStopTimes.toDto(this.startStopTimes),
     );
   };
 
   private updateStatusBarItem = () => {
     const durationAsIfStopped = R.pipe(
-      this.state.startStopTimes,
+      this.startStopTimes,
       StartStopTimes.toStopped,
       StartStopTimes.getDuration,
     );
@@ -127,7 +108,7 @@ export class StatusBarTimer {
     // TODO Cache durationFormat config setting?
     const format = this.getConfig().durationFormat as string;
 
-    const icon = StartStopTimes.isStarted(this.state.startStopTimes)
+    const icon = StartStopTimes.isStarted(this.startStopTimes)
       ? StatusBarTimer.icons.started
       : StatusBarTimer.icons.stopped;
 
@@ -136,38 +117,34 @@ export class StatusBarTimer {
 
   private readonly commands = {
     startTimer: () => {
-      if (StartStopTimes.isStarted(this.state.startStopTimes)) {
+      if (StartStopTimes.isStarted(this.startStopTimes)) {
         return;
       }
 
-      this.state.startStopTimes = StartStopTimes.toStarted(
-        this.state.startStopTimes,
-      );
+      this.startStopTimes = StartStopTimes.toStarted(this.startStopTimes);
       this.saveState();
       this.updateStatusBarItem();
     },
 
     stopTimer: () => {
-      if (!StartStopTimes.isStarted(this.state.startStopTimes)) {
+      if (!StartStopTimes.isStarted(this.startStopTimes)) {
         return;
       }
 
-      this.state.startStopTimes = StartStopTimes.toStopped(
-        this.state.startStopTimes,
-      );
+      this.startStopTimes = StartStopTimes.toStopped(this.startStopTimes);
       this.saveState();
       this.updateStatusBarItem();
     },
 
     resetTimer: () => {
       // TODO Add confirmation quickpick
-      this.state.startStopTimes = StartStopTimes.stopped();
+      this.startStopTimes = StartStopTimes.stopped();
       this.saveState();
       this.updateStatusBarItem();
     },
 
     clickStatusBarItem: () => {
-      if (StartStopTimes.isStarted(this.state.startStopTimes)) {
+      if (StartStopTimes.isStarted(this.startStopTimes)) {
         this.commands.stopTimer();
       } else {
         this.commands.startTimer();
@@ -175,15 +152,17 @@ export class StatusBarTimer {
     },
 
     debugShowWorkspaceStorage: () => {
-      const data: Record<string, unknown> = {};
+      const workspaceState: Record<string, unknown> = {};
       for (const key of this.context.workspaceState.keys()) {
-        data[key] = this.context.workspaceState.get(key);
+        workspaceState[key] = this.context.workspaceState.get(key);
       }
 
-      if (data.length === 0) {
+      if (workspaceState.length === 0) {
         console.log("Workspace storage empty");
       } else {
-        console.log(`Workspace storage:\n${JSON.stringify(data, null, 2)}`);
+        console.log(
+          `Workspace storage:\n${JSON.stringify(workspaceState, null, 2)}`,
+        );
       }
     },
 
