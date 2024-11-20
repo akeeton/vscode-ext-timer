@@ -3,7 +3,7 @@ import * as assert from "assert";
 /**
  * Wraps {@link assert.deepStrictEqual} so that it doesn't throw when everything is equal except the references.
  */
-export function deepStrictValuesEqual<T>(
+export function assertDeepStrictValuesEqual<T>(
   actual: unknown,
   expected: T,
   message?: string | Error,
@@ -22,4 +22,18 @@ export function deepStrictValuesEqual<T>(
       throw err;
     }
   }
+}
+
+export function assertTrue(
+  actual: unknown,
+  message?: string | Error,
+): asserts actual {
+  assert.strictEqual(actual, true, message);
+}
+
+export function assertFalse(
+  actual: unknown,
+  message?: string | Error,
+): asserts actual {
+  assert.strictEqual(actual, false, message);
 }
