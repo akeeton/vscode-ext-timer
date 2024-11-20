@@ -2,7 +2,7 @@ import assert from "assert";
 import * as R from "remeda";
 import { PackageJson } from "type-fest";
 import * as vscode from "vscode";
-import * as StartStopTimes from "./StartStopTimes";
+import * as StartStopTimes from "./start-stop-times";
 
 type VSCodePackageJson = PackageJson & {
   name: string;
@@ -38,7 +38,7 @@ class State {
 
 // TODO Make more functional and move "IO" to the edges
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
-export default class StatusBarTimer {
+export class StatusBarTimer {
   private context: vscode.ExtensionContext;
   private stateStorageKey: string;
 

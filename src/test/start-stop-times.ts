@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { DateTime, Duration, Interval } from "luxon";
 import * as R from "remeda";
-import * as StartStopTimes from "../StartStopTimes";
+import * as StartStopTimes from "../start-stop-times";
 import { assertDeepStrictValuesEqual, assertFalse, assertTrue } from "./assert";
 
 suite("StartStopTimes Test Suite", () => {
