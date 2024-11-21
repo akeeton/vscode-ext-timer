@@ -15,19 +15,20 @@ type VsCodePackageJson = PackageJson & {
 };
 
 interface WorkspaceStateDto {
-  startStopTimes: StartStopTimes.Dto;
+  readonly startStopTimes: StartStopTimes.Dto;
 }
 
 // TODO Make more functional and move "IO" to the edges
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
 export class StatusBarTimer {
-  private context: vscode.ExtensionContext;
-  private storageKey: string;
+  private readonly context: vscode.ExtensionContext;
+  private readonly storageKey: string;
 
-  private startStopTimes = StartStopTimes.stopped();
   private readonly statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
   );
+
+  private startStopTimes = StartStopTimes.makeStopped();
 
   // See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
   private static icons = {
@@ -82,7 +83,7 @@ export class StatusBarTimer {
       this.context.workspaceState.get<WorkspaceStateDto>(this.storageKey);
 
     if (!workspaceStateDto) {
-      this.startStopTimes = StartStopTimes.stopped();
+      this.startStopTimes = StartStopTimes.makeStopped();
       return;
     }
 
@@ -138,7 +139,7 @@ export class StatusBarTimer {
 
     resetTimer: () => {
       // TODO Add confirmation quickpick
-      this.startStopTimes = StartStopTimes.stopped();
+      this.startStopTimes = StartStopTimes.makeStopped();
       this.saveState();
       this.updateStatusBarItem();
     },

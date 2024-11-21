@@ -16,7 +16,7 @@ suite("StartStopTimes Test Suite", () => {
   ];
 
   test("startedNow() returns an object where isStarted() is true and lastStartTime is near DateTime.utc()", () => {
-    const startedNow = StartStopTimes.startedNow();
+    const startedNow = StartStopTimes.makeStartedNow();
 
     assertTrue(StartStopTimes.isStarted(startedNow));
 
@@ -32,7 +32,7 @@ suite("StartStopTimes Test Suite", () => {
   });
 
   test("StartStopTimes DTO round trip is the same as the original", () => {
-    const startStopTimes = StartStopTimes.startedNow(testIntervals);
+    const startStopTimes = StartStopTimes.makeStartedNow(testIntervals);
     const roundTrip = R.pipe(
       startStopTimes,
       StartStopTimes.toDto,
@@ -43,15 +43,17 @@ suite("StartStopTimes Test Suite", () => {
   });
 
   test("startedNow() returns an object where isStarted() is true", () => {
-    assertTrue(R.pipe(StartStopTimes.startedNow(), StartStopTimes.isStarted));
+    assertTrue(
+      R.pipe(StartStopTimes.makeStartedNow(), StartStopTimes.isStarted),
+    );
   });
 
   test("stopped() returns an object where isStarted() is false", () => {
-    assertFalse(R.pipe(StartStopTimes.stopped(), StartStopTimes.isStarted));
+    assertFalse(R.pipe(StartStopTimes.makeStopped(), StartStopTimes.isStarted));
   });
 
   test("toStarted() returns the same object when isStarted() is true", () => {
-    const started = StartStopTimes.startedNow();
+    const started = StartStopTimes.makeStartedNow();
     const startedAgain = StartStopTimes.toStarted(started);
 
     assertTrue(StartStopTimes.isStarted(started));
@@ -60,7 +62,7 @@ suite("StartStopTimes Test Suite", () => {
   });
 
   test("toStarted() returns a new object when isStarted() is false", () => {
-    const stopped = StartStopTimes.stopped();
+    const stopped = StartStopTimes.makeStopped();
     const started = StartStopTimes.toStarted(stopped);
 
     assertFalse(StartStopTimes.isStarted(stopped));
@@ -69,7 +71,7 @@ suite("StartStopTimes Test Suite", () => {
   });
 
   test("toStopped() returns the same object when isStarted() is false", () => {
-    const stopped = StartStopTimes.stopped();
+    const stopped = StartStopTimes.makeStopped();
     const stoppedAgain = StartStopTimes.toStopped(stopped);
 
     assertFalse(StartStopTimes.isStarted(stopped));
@@ -78,7 +80,7 @@ suite("StartStopTimes Test Suite", () => {
   });
 
   test("toStopped() returns a new object when isStarted() is true", () => {
-    const started = StartStopTimes.startedNow();
+    const started = StartStopTimes.makeStartedNow();
     const stopped = StartStopTimes.toStopped(started);
 
     assertTrue(StartStopTimes.isStarted(started));
