@@ -87,6 +87,7 @@
     "prettier": "3.3.3",
     "rimraf": "^6.0.1",
     "ts-loader": "^9.5.1",
+    "ts-transformer-keys": "^0.4.4",
     "type-fest": "^4.27.0",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.14.0",
