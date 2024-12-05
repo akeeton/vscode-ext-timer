@@ -63,7 +63,7 @@
     "compile": "webpack",
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
-    "// TODO Replace compile-tests with this?": "tsc -b --clean && tsc -b",
+    "// XXX Replace compile-tests with this? see https://stackoverflow.com/a/71802087/68086": "tsc -b --clean && tsc -b",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
