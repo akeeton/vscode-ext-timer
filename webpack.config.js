@@ -1,6 +1,7 @@
 "use strict";
 
 const path = require("path");
+const keysTransformer = require('ts-transformer-keys/transformer').default;
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -27,15 +28,40 @@ const extensionConfig = {
   },
   module: {
     rules: [
+      // {
+      //   test: /\.ts$/,
+      //   exclude: /node_modules/,
+      //   use: [
+      //     {
+      //       loader: "ts-loader",
+      //     },
+      //   ],
+      // },
+      // {
+      //   test: /\.ts$/,
+      //   exclude: /node_modules/,
+      //   loader: "ts-loader",
+      // //   options: {
+      // // // make sure not to set `transpileOnly: true` here, otherwise it will not work
+      // //     getCustomTransformers: program => ({
+      // //       before: [
+      // //         keysTransformer(program)
+      // //       ]
+      // //     })
+      // //   }
+      // },
       {
         test: /\.ts$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: "ts-loader",
-          },
-        ],
-      },
+        loader: 'ts-loader', // or 'awesome-typescript-loader'
+        options: {
+          // make sure not to set `transpileOnly: true` here, otherwise it will not work
+          getCustomTransformers: program => ({
+            before: [
+              keysTransformer(program)
+            ]
+          })
+        }
+      }
     ],
   },
   devtool: "nosources-source-map",
