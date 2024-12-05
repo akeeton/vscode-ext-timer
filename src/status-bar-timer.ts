@@ -87,6 +87,13 @@ export class StatusBarTimer {
       return;
     }
 
+    // FIXME Make more robust and DRY
+    if (!("startStopTimes" in workspaceStateDto)) {
+      vscode.window.showWarningMessage("Failed loading workspace state");
+      this.startStopTimes = StartStopTimes.makeStopped();
+      return;
+    }
+
     this.startStopTimes = StartStopTimes.fromDto(
       workspaceStateDto.startStopTimes,
     );
