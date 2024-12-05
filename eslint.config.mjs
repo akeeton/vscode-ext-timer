@@ -25,7 +25,7 @@ export default [
       sourceType: "module",
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["eslint.config.mjs", "webpack.config.js"],
+          allowDefaultProject: ["eslint.config.mjs"],
         },
         tsconfigRootDir: import.meta.dirname,
       },
