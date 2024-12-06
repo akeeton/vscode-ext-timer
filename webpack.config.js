@@ -37,19 +37,6 @@ const extensionConfig = {
       //     },
       //   ],
       // },
-      // {
-      //   test: /\.ts$/,
-      //   exclude: /node_modules/,
-      //   loader: "ts-loader",
-      // //   options: {
-      // // // make sure not to set `transpileOnly: true` here, otherwise it will not work
-      // //     getCustomTransformers: program => ({
-      // //       before: [
-      // //         keysTransformer(program)
-      // //       ]
-      // //     })
-      // //   }
-      // },
       {
         test: /\.ts$/,
         exclude: /node_modules/,
