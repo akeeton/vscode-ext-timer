@@ -1,5 +1,7 @@
+//@ts-check
 "use strict";
 
+const { warn } = require("console");
 const path = require("path");
 
 //@ts-check
