@@ -1,5 +1,6 @@
 import assert from "assert";
 import * as R from "remeda";
+import { keys } from "ts-transformer-keys";
 import { PackageJson } from "type-fest";
 import * as vscode from "vscode";
 import * as StartStopTimes from "./start-stop-times";
@@ -87,11 +88,14 @@ export class StatusBarTimer {
       return;
     }
 
-    // FIXME Make more robust and DRY
-    if (!("startStopTimes" in workspaceStateDto)) {
-      vscode.window.showWarningMessage("Failed loading workspace state");
-      this.startStopTimes = StartStopTimes.makeStopped();
-      return;
+    for (const key of keys<WorkspaceStateDto>()) {
+      if (!(key in workspaceStateDto)) {
+        vscode.window.showWarningMessage(
+          `Failed loading workspace state: missing '${key}'`,
+        );
+        this.startStopTimes = StartStopTimes.makeStopped();
+        return;
+      }
     }
 
     this.startStopTimes = StartStopTimes.fromDto(
