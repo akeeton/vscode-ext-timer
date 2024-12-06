@@ -45,6 +45,8 @@ const extensionConfig = {
         exclude: /node_modules/,
         loader: 'ts-loader', // or 'awesome-typescript-loader'
         options: {
+          // logInfoToStdOut: true,
+          // logLevel: "info",
           // make sure not to set `transpileOnly: true` here, otherwise it will not work
           getCustomTransformers: program => ({
             before: [
