@@ -1,5 +1,7 @@
+//@ts-check
 "use strict";
 
+const { warn } = require("console");
 const path = require("path");
 const keysTransformer = require('ts-transformer-keys/transformer').default;
 
@@ -42,6 +44,8 @@ const extensionConfig = {
         exclude: /node_modules/,
         loader: 'ts-loader', // or 'awesome-typescript-loader'
         options: {
+          // logInfoToStdOut: true,
+          // logLevel: "info",
           // make sure not to set `transpileOnly: true` here, otherwise it will not work
           getCustomTransformers: program => ({
             before: [
