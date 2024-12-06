@@ -16,7 +16,7 @@ export default [
     files: ["**/*.ts"],
   },
   {
-    ignores: ["webpack.config.js"],
+    ignores: ["**/*.js"],
   },
   {
     plugins: {
