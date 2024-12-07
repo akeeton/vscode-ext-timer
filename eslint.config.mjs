@@ -16,6 +16,9 @@ export default [
     files: ["**/*.ts"],
   },
   {
+    ignores: ["**/*.js"],
+  },
+  {
     plugins: {
       "@typescript-eslint": tseslint.plugin,
     },

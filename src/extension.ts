@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import StatusBarTimer from "./StatusBarTimer";
+import { StatusBarTimer } from "./status-bar-timer";
 
 export function activate(context: vscode.ExtensionContext) {
   const statusBarTimer = new StatusBarTimer(

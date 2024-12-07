@@ -1,9 +1,11 @@
 import assert from "assert";
+import * as R from "remeda";
+import { keys } from "ts-transformer-keys";
 import { PackageJson } from "type-fest";
 import * as vscode from "vscode";
-import { StartStopTimes, StartStopTimesDto } from "./StartStopTimes";
+import * as StartStopTimes from "./start-stop-times";
 
-type VSCodePackageJson = PackageJson & {
+type VsCodePackageJson = PackageJson & {
   name: string;
   displayName: string;
   contributes: {
@@ -13,39 +15,21 @@ type VSCodePackageJson = PackageJson & {
   };
 };
 
-interface StateDto {
-  startStopTimes: StartStopTimesDto;
+interface WorkspaceStateDto {
+  readonly startStopTimes: StartStopTimes.Dto;
 }
 
-class State {
-  startStopTimes: StartStopTimes;
-
-  constructor(startStopTimes: StartStopTimes) {
-    this.startStopTimes = startStopTimes;
-  }
-
-  static fromDto = (dto: StateDto): State => {
-    return new State(StartStopTimes.fromDto(dto.startStopTimes));
-  };
-
-  toDto = (): StateDto => {
-    return {
-      startStopTimes: this.startStopTimes.toDto(),
-    };
-  };
-}
-
+// TODO Make more functional and move "IO" to the edges
 // TODO Somehow finish open interval and save to storage on shutdown (using focus change callback?)
-export default class StatusBarTimer {
-  private context: vscode.ExtensionContext;
-  private stateStorageKey: string;
-
-  // TODO Move State fields back to this class and only create State during saving/loading?
-  private state = new State(StartStopTimes.stopped());
+export class StatusBarTimer {
+  private readonly context: vscode.ExtensionContext;
+  private readonly storageKey: string;
 
   private readonly statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
   );
+
+  private startStopTimes = StartStopTimes.makeStopped();
 
   // See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing
   private static icons = {
@@ -53,9 +37,9 @@ export default class StatusBarTimer {
     stopped: "stop-circle",
   };
 
-  constructor(context: vscode.ExtensionContext, stateStorageKey: string) {
+  constructor(context: vscode.ExtensionContext, storageKey: string) {
     this.context = context;
-    this.stateStorageKey = stateStorageKey;
+    this.storageKey = storageKey;
   }
 
   activate = () => {
@@ -83,8 +67,8 @@ export default class StatusBarTimer {
     console.log(`Extension ${this.context.extension.id} activated`);
   };
 
-  private getPackageJson = (): VSCodePackageJson => {
-    return this.context.extension.packageJSON as VSCodePackageJson;
+  private getPackageJson = (): VsCodePackageJson => {
+    return this.context.extension.packageJSON as VsCodePackageJson;
   };
 
   private getConfigSection = () => {
@@ -96,34 +80,47 @@ export default class StatusBarTimer {
   };
 
   private loadState = (): void => {
-    const stateDto = this.context.workspaceState.get<StateDto>(
-      this.stateStorageKey,
-    );
+    const workspaceStateDto =
+      this.context.workspaceState.get<WorkspaceStateDto>(this.storageKey);
 
-    if (!stateDto) {
-      this.state = new State(StartStopTimes.stopped());
+    if (!workspaceStateDto) {
+      this.startStopTimes = StartStopTimes.makeStopped();
       return;
     }
 
-    this.state = State.fromDto(stateDto);
+    for (const key of keys<WorkspaceStateDto>()) {
+      if (!(key in workspaceStateDto)) {
+        vscode.window.showWarningMessage(
+          `Failed loading workspace state: missing '${key}'`,
+        );
+        this.startStopTimes = StartStopTimes.makeStopped();
+        return;
+      }
+    }
+
+    this.startStopTimes = StartStopTimes.fromDto(
+      workspaceStateDto.startStopTimes,
+    );
   };
 
   private saveState = (): void => {
     this.context.workspaceState.update(
-      this.stateStorageKey,
-      this.state.toDto(),
+      this.storageKey,
+      StartStopTimes.toDto(this.startStopTimes),
     );
   };
 
   private updateStatusBarItem = () => {
-    const durationAsIfStopped = this.state.startStopTimes
-      .toStopped()
-      .getDuration();
+    const durationAsIfStopped = R.pipe(
+      this.startStopTimes,
+      StartStopTimes.toStopped,
+      StartStopTimes.getDuration,
+    );
 
     // TODO Cache durationFormat config setting?
     const format = this.getConfig().durationFormat as string;
 
-    const icon = this.state.startStopTimes.isStarted()
+    const icon = StartStopTimes.isStarted(this.startStopTimes)
       ? StatusBarTimer.icons.started
       : StatusBarTimer.icons.stopped;
 
@@ -132,34 +129,34 @@ export default class StatusBarTimer {
 
   private readonly commands = {
     startTimer: () => {
-      if (this.state.startStopTimes.isStarted()) {
+      if (StartStopTimes.isStarted(this.startStopTimes)) {
         return;
       }
 
-      this.state.startStopTimes = this.state.startStopTimes.toStarted();
+      this.startStopTimes = StartStopTimes.toStarted(this.startStopTimes);
       this.saveState();
       this.updateStatusBarItem();
     },
 
     stopTimer: () => {
-      if (!this.state.startStopTimes.isStarted()) {
+      if (!StartStopTimes.isStarted(this.startStopTimes)) {
         return;
       }
 
-      this.state.startStopTimes = this.state.startStopTimes.toStopped();
+      this.startStopTimes = StartStopTimes.toStopped(this.startStopTimes);
       this.saveState();
       this.updateStatusBarItem();
     },
 
     resetTimer: () => {
       // TODO Add confirmation quickpick
-      this.state.startStopTimes = StartStopTimes.stopped();
+      this.startStopTimes = StartStopTimes.makeStopped();
       this.saveState();
       this.updateStatusBarItem();
     },
 
     clickStatusBarItem: () => {
-      if (this.state.startStopTimes.isStarted()) {
+      if (StartStopTimes.isStarted(this.startStopTimes)) {
         this.commands.stopTimer();
       } else {
         this.commands.startTimer();
@@ -167,15 +164,17 @@ export default class StatusBarTimer {
     },
 
     debugShowWorkspaceStorage: () => {
-      const data: Record<string, unknown> = {};
+      const workspaceState: Record<string, unknown> = {};
       for (const key of this.context.workspaceState.keys()) {
-        data[key] = this.context.workspaceState.get(key);
+        workspaceState[key] = this.context.workspaceState.get(key);
       }
 
-      if (data.length === 0) {
+      if (workspaceState.length === 0) {
         console.log("Workspace storage empty");
       } else {
-        console.log(`Workspace storage:\n${JSON.stringify(data, null, 2)}`);
+        console.log(
+          `Workspace storage:\n${JSON.stringify(workspaceState, null, 2)}`,
+        );
       }
     },
 
