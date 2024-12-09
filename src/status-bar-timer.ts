@@ -89,9 +89,9 @@ export class StatusBarTimer {
     }
 
     for (const key of keys<WorkspaceStateDto>()) {
-      if (!(key in workspaceStateDto)) {
+      if (!Object.prototype.hasOwnProperty.call(workspaceStateDto, key)) {
         vscode.window.showWarningMessage(
-          `Failed loading workspace state: missing '${key}'`,
+          `Failed loading workspace state: missing key '${key}'`,
         );
         this.startStopTimes = StartStopTimes.makeStopped();
         return;
