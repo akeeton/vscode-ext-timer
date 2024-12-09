@@ -3,6 +3,7 @@ import * as R from "remeda";
 import { keys } from "ts-transformer-keys";
 import { PackageJson } from "type-fest";
 import * as vscode from "vscode";
+import * as object from "./object";
 import * as StartStopTimes from "./start-stop-times";
 
 type VsCodePackageJson = PackageJson & {
@@ -83,19 +84,13 @@ export class StatusBarTimer {
     const workspaceStateDto =
       this.context.workspaceState.get<WorkspaceStateDto>(this.storageKey);
 
-    if (!workspaceStateDto) {
+    if (
+      !workspaceStateDto ||
+      !object.hasKeysOfItsType(workspaceStateDto, keys<WorkspaceStateDto>())
+    ) {
+      vscode.window.showWarningMessage("Failed loading workspace state");
       this.startStopTimes = StartStopTimes.makeStopped();
       return;
-    }
-
-    for (const key of keys<WorkspaceStateDto>()) {
-      if (!Object.prototype.hasOwnProperty.call(workspaceStateDto, key)) {
-        vscode.window.showWarningMessage(
-          `Failed loading workspace state: missing key '${key}'`,
-        );
-        this.startStopTimes = StartStopTimes.makeStopped();
-        return;
-      }
     }
 
     this.startStopTimes = StartStopTimes.fromDto(
